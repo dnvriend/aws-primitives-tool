@@ -7,6 +7,7 @@ and has been reviewed and tested by a human.
 
 import json
 import sys
+from decimal import Decimal
 from typing import Any
 
 
@@ -40,6 +41,13 @@ def parse_key(full_key: str) -> tuple[str, str]:
     return "", full_key
 
 
+def _decimal_default(obj: Any) -> Any:
+    """Convert Decimal to int/float for JSON serialization."""
+    if isinstance(obj, Decimal):
+        return int(obj) if obj % 1 == 0 else float(obj)
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+
 def output_json(data: dict[str, Any], quiet: bool = False) -> None:
     """
     Output JSON to stdout.
@@ -49,7 +57,7 @@ def output_json(data: dict[str, Any], quiet: bool = False) -> None:
         quiet: If True, suppress output
     """
     if not quiet:
-        print(json.dumps(data))
+        print(json.dumps(data, default=_decimal_default))
 
 
 def output_text(message: str, quiet: bool = False) -> None:

@@ -67,6 +67,10 @@ def create_table(
             ],
         )
 
+        # Wait for table to become ACTIVE before enabling TTL
+        waiter = dynamodb.get_waiter("table_exists")
+        waiter.wait(TableName=table_name)
+
         # Enable TTL
         dynamodb.update_time_to_live(
             TableName=table_name,
