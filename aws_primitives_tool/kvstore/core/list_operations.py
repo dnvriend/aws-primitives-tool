@@ -176,11 +176,11 @@ def pop_last(
     list_name: str,
 ) -> dict[str, Any] | None:
     """
-    Remove and return last item from list.
+    Remove and return last item from list (from tail/right side).
 
     Uses descending query (ScanIndexForward=False) to get item with largest SK.
-    For lists with lpush, this gives FIFO behavior (oldest first).
-    For lists with rpush, this gives LIFO behavior (most recent first).
+    - For lpush lists (negative timestamps): largest SK = most recently pushed (LIFO)
+    - For rpush lists (positive timestamps): largest SK = last item appended (LIFO)
 
     Args:
         client: DynamoDB client
@@ -198,7 +198,7 @@ def pop_last(
     items = client.query(
         key_condition_expression=Key(ATTR_PK).eq(pk),
         limit=1,
-        scan_index_forward=False,  # Descending order
+        scan_index_forward=False,  # Descending - get largest SK
     )
 
     if not items:
@@ -226,11 +226,11 @@ def pop_first(
     list_name: str,
 ) -> dict[str, Any] | None:
     """
-    Remove and return first item from list.
+    Remove and return first item from list (from head/left side).
 
     Uses ascending query (ScanIndexForward=True) to get item with smallest SK.
-    For lists with lpush, this gives LIFO behavior (most recent first).
-    For lists with rpush, this gives FIFO behavior (oldest first).
+    - For lpush lists (negative timestamps): smallest SK = oldest item pushed
+    - For rpush lists (positive timestamps): smallest SK = first item appended (FIFO)
 
     Args:
         client: DynamoDB client
@@ -248,6 +248,7 @@ def pop_first(
     items = client.query(
         key_condition_expression=Key(ATTR_PK).eq(pk),
         limit=1,
+        scan_index_forward=True,  # Ascending - get smallest SK
     )
 
     if not items:
