@@ -4,10 +4,10 @@
 - [x] Table management (create-table, drop-table)
 - [x] Basic key-value operations (set, get)
 
-## Phase 2 - Remaining KV Operations
-- [ ] `delete` - Delete a key
-- [ ] `exists` - Check if key exists
-- [ ] `list` - List keys by prefix
+## Phase 2 Complete ✅
+- [x] `delete` - Delete a key
+- [x] `exists` - Check if key exists
+- [x] `list` - List keys by prefix
 
 ## Phase 3 - Counter Operations
 - [ ] `inc` - Atomic increment
@@ -53,7 +53,7 @@
 ## Future Enhancements
 - [ ] Add priority queues (queue-push with --priority)
 - [ ] Add batch operations (batch-get, batch-set)
-- [ ] Add conditional updates (--if-value for delete)
+- [x] Add conditional updates (--if-value for delete) ✅ Implemented in Phase 2
 - [ ] Add query operations (query by type, TTL, etc.)
 - [ ] Add integration tests with moto
 - [ ] Add CLI tests with Click runner

@@ -6,7 +6,13 @@ and has been reviewed and tested by a human.
 
 import click
 
-from aws_primitives_tool.kvstore.commands.kv_commands import get_command, set_command
+from aws_primitives_tool.kvstore.commands.kv_commands import (
+    delete_command,
+    exists_command,
+    get_command,
+    list_command,
+    set_command,
+)
 from aws_primitives_tool.kvstore.commands.table_commands import (
     create_table_command,
     drop_table_command,
@@ -33,6 +39,9 @@ kvstore.add_command(drop_table_command)
 # Register kv commands
 kvstore.add_command(set_command)
 kvstore.add_command(get_command)
+kvstore.add_command(exists_command)
+kvstore.add_command(delete_command)
+kvstore.add_command(list_command)
 
 
 if __name__ == "__main__":

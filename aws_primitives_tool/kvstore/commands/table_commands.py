@@ -189,9 +189,7 @@ def drop_table_command(
 
     except TableNotFoundError as e:
         if text:
-            click.echo(
-                error_text(str(e), "Check table name or list tables with AWS CLI"), err=True
-            )
+            click.echo(error_text(str(e), "Check table name or list tables with AWS CLI"), err=True)
         else:
             click.echo(error_json(str(e), "Check table name", 1), err=True)
         ctx.exit(1)

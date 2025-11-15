@@ -89,7 +89,11 @@ class DynamoDBClient:
             raise  # For type checker
 
     def delete_item(
-        self, key: dict[str, Any], condition_expression: str | None = None
+        self,
+        key: dict[str, Any],
+        condition_expression: str | None = None,
+        expression_attribute_names: dict[str, str] | None = None,
+        expression_attribute_values: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Delete item with optional condition.
@@ -97,6 +101,8 @@ class DynamoDBClient:
         Args:
             key: Key to delete
             condition_expression: Optional condition expression
+            expression_attribute_names: Optional expression attribute names
+            expression_attribute_values: Optional expression attribute values
 
         Returns:
             Response from DynamoDB
@@ -109,7 +115,40 @@ class DynamoDBClient:
             kwargs: dict[str, Any] = {"Key": key}
             if condition_expression:
                 kwargs["ConditionExpression"] = condition_expression
+            if expression_attribute_names:
+                kwargs["ExpressionAttributeNames"] = expression_attribute_names
+            if expression_attribute_values:
+                kwargs["ExpressionAttributeValues"] = expression_attribute_values
             return self.table.delete_item(**kwargs)  # type: ignore[return-value]
+        except ClientError as e:
+            self._handle_error(e)
+            raise  # For type checker
+
+    def query(
+        self,
+        key_condition_expression: Any,
+        limit: int | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Query items by key condition.
+
+        Args:
+            key_condition_expression: Key condition expression
+            limit: Maximum number of items to return
+
+        Returns:
+            List of items
+
+        Raises:
+            KVStoreError: For DynamoDB errors
+        """
+        try:
+            kwargs: dict[str, Any] = {"KeyConditionExpression": key_condition_expression}
+            if limit:
+                kwargs["Limit"] = limit
+
+            response = self.table.query(**kwargs)
+            return response.get("Items", [])
         except ClientError as e:
             self._handle_error(e)
             raise  # For type checker

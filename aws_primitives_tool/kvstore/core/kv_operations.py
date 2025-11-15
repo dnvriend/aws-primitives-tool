@@ -60,9 +60,7 @@ def set_value(
     return {"key": key, "value": value, "created_at": timestamp, "updated_at": timestamp}
 
 
-def get_value(
-    client: DynamoDBClient, key: str, default: str | None = None
-) -> dict[str, Any]:
+def get_value(client: DynamoDBClient, key: str, default: str | None = None) -> dict[str, Any]:
     """
     Get a value by key.
 
@@ -99,3 +97,107 @@ def get_value(
         "created_at": item.get("created_at"),
         "updated_at": item.get("updated_at"),
     }
+
+
+def exists_value(client: DynamoDBClient, key: str) -> bool:
+    """
+    Check if a key exists.
+
+    Args:
+        client: DynamoDB client
+        key: Key name
+
+    Returns:
+        True if key exists, False otherwise
+    """
+    pk = format_key(PREFIX_KV, key)
+    sk = pk
+
+    item = client.get_item({ATTR_PK: pk, ATTR_SK: sk})
+
+    return item is not None
+
+
+def delete_value(client: DynamoDBClient, key: str, if_value: str | None = None) -> dict[str, Any]:
+    """
+    Delete a key-value pair.
+
+    Args:
+        client: DynamoDB client
+        key: Key name
+        if_value: Only delete if value matches
+
+    Returns:
+        Item data
+
+    Raises:
+        ConditionFailedError: If if_value provided and doesn't match
+    """
+    pk = format_key(PREFIX_KV, key)
+    sk = pk
+
+    condition = None
+    expression_attribute_names = None
+    expression_attribute_values = None
+
+    if if_value is not None:
+        condition = "#value = :if_value"
+        expression_attribute_names = {"#value": "value"}
+        expression_attribute_values = {":if_value": if_value}
+
+    try:
+        client.delete_item(
+            {ATTR_PK: pk, ATTR_SK: sk},
+            condition_expression=condition,
+            expression_attribute_names=expression_attribute_names,
+            expression_attribute_values=expression_attribute_values,
+        )
+    except KeyNotFoundError:
+        # Deletion is idempotent - deleting non-existent key succeeds
+        pass
+
+    return {"key": key, "deleted": True}
+
+
+def list_keys(client: DynamoDBClient, prefix: str = "", limit: int | None = None) -> dict[str, Any]:
+    """
+    List keys by prefix.
+
+    Args:
+        client: DynamoDB client
+        prefix: Key prefix to filter by (empty for all keys)
+        limit: Maximum number of keys to return
+
+    Returns:
+        Dictionary with prefix, keys list, and count
+    """
+    from boto3.dynamodb.conditions import Key
+
+    # Build the key condition
+    if prefix:
+        # Query for specific prefix
+        pk_value = format_key(PREFIX_KV, prefix)
+        key_condition = Key(ATTR_PK).begins_with(pk_value)
+    else:
+        # Query for all KV items (PK starts with "kv:")
+        key_condition = Key(ATTR_PK).begins_with(PREFIX_KV + ":")
+
+    items = client.query(key_condition, limit)
+
+    # Transform items to output format
+    keys = []
+    for item in items:
+        pk = item.get(ATTR_PK, "")
+        # Strip the "kv:" prefix from the key
+        _, user_key = pk.split(":", 1) if ":" in pk else ("", pk)
+
+        keys.append(
+            {
+                "key": user_key,
+                "value": item.get("value"),
+                "type": item.get("type"),
+                "created_at": item.get("created_at"),
+            }
+        )
+
+    return {"prefix": prefix, "keys": keys, "count": len(keys)}
