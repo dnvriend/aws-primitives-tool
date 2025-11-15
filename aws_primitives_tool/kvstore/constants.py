@@ -19,7 +19,7 @@ PREFIX_COUNTER = "counter"
 PREFIX_LOCK = "lock"
 PREFIX_QUEUE = "queue"
 PREFIX_LEADER = "leader"
-PREFIX_SET = "set"
+PREFIX_SET = "set"  # Set operations
 PREFIX_LIST = "list"
 
 # DynamoDB attribute names

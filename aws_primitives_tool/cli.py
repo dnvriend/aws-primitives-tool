@@ -24,6 +24,12 @@ from aws_primitives_tool.kvstore.commands.leader_commands import (
     leader_heartbeat_command,
     leader_resign_command,
 )
+from aws_primitives_tool.kvstore.commands.list_commands import (
+    lpop_command,
+    lpush_command,
+    rpop_command,
+    rpush_command,
+)
 from aws_primitives_tool.kvstore.commands.lock_commands import (
     lock_acquire_command,
     lock_check_command,
@@ -105,6 +111,12 @@ kvstore.add_command(sismember_command)
 kvstore.add_command(smembers_command)
 kvstore.add_command(scard_command)
 
+
+# Register list commands
+kvstore.add_command(lpush_command)
+kvstore.add_command(lpop_command)
+kvstore.add_command(rpop_command)
+kvstore.add_command(rpush_command)
 
 if __name__ == "__main__":
     main()

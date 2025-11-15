@@ -40,12 +40,12 @@
 - [x] `smembers` - List all members (Query on PK)
 - [x] `scard` - Count members (Query with SELECT=COUNT)
 
-## Phase 8 - List Operations
-- [ ] `lpush` - Prepend to list
-- [ ] `rpush` - Append to list
-- [ ] `lpop` - Remove and return first item
-- [ ] `rpop` - Remove and return last item
-- [ ] `lrange` - Get range of items
+## Phase 8 Complete ✅
+- [x] `lpush` - Prepend to list
+- [x] `rpush` - Append to list
+- [x] `lpop` - Remove and return first item
+- [x] `rpop` - Remove and return last item
+- [x] `lrange` - Get range of items
 
 ## Phase 9 - Transaction Operations
 - [ ] `transaction` - Execute multiple operations atomically (with --file flag)
