@@ -27,11 +27,11 @@
 - [x] `queue-size` - Count queue items
 - [x] `queue-ack` - Acknowledge processed item
 
-## Phase 6 - Leader Election Operations
-- [ ] `leader-elect` - Attempt to become leader
-- [ ] `leader-heartbeat` - Extend leadership
-- [ ] `leader-check` - Check current leader
-- [ ] `leader-resign` - Step down as leader
+## Phase 6 Complete ✅
+- [x] `leader-elect` - Attempt to become leader (atomic conditional write)
+- [x] `leader-heartbeat` - Extend leadership (conditional TTL update)
+- [x] `leader-check` - Check current leader (read-only)
+- [x] `leader-resign` - Step down as leader (conditional delete)
 
 ## Phase 7 - Set Operations
 - [ ] `sadd` - Add member to set

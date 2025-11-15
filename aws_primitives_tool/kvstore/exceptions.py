@@ -48,6 +48,12 @@ class QueueEmptyError(KVStoreError):
     pass
 
 
+class LeaderElectionError(KVStoreError):
+    """Leader election failed - another agent is the leader."""
+
+    pass
+
+
 class AWSThrottlingError(KVStoreError):
     """DynamoDB throttling occurred."""
 

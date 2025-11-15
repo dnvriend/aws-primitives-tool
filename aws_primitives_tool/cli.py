@@ -18,6 +18,12 @@ from aws_primitives_tool.kvstore.commands.kv_commands import (
     list_command,
     set_command,
 )
+from aws_primitives_tool.kvstore.commands.leader_commands import (
+    leader_check_command,
+    leader_elect_command,
+    leader_heartbeat_command,
+    leader_resign_command,
+)
 from aws_primitives_tool.kvstore.commands.lock_commands import (
     lock_acquire_command,
     lock_check_command,
@@ -78,6 +84,12 @@ kvstore.add_command(queue_pop_command)
 kvstore.add_command(queue_peek_command)
 kvstore.add_command(queue_size_command)
 kvstore.add_command(queue_ack_command)
+
+# Register leader commands
+kvstore.add_command(leader_elect_command)
+kvstore.add_command(leader_heartbeat_command)
+kvstore.add_command(leader_check_command)
+kvstore.add_command(leader_resign_command)
 
 
 if __name__ == "__main__":
