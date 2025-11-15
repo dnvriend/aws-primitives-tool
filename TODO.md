@@ -33,12 +33,12 @@
 - [x] `leader-check` - Check current leader (read-only)
 - [x] `leader-resign` - Step down as leader (conditional delete)
 
-## Phase 7 - Set Operations
-- [ ] `sadd` - Add member to set
-- [ ] `srem` - Remove member from set
-- [ ] `sismember` - Check if member exists
-- [ ] `smembers` - List all members
-- [ ] `scard` - Count members
+## Phase 7 Complete ✅
+- [x] `sadd` - Add member to set (composite sort key)
+- [x] `srem` - Remove member from set (idempotent)
+- [x] `sismember` - Check if member exists
+- [x] `smembers` - List all members (Query on PK)
+- [x] `scard` - Count members (Query with SELECT=COUNT)
 
 ## Phase 8 - List Operations
 - [ ] `lpush` - Prepend to list

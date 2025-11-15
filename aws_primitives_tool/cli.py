@@ -37,6 +37,13 @@ from aws_primitives_tool.kvstore.commands.queue_commands import (
     queue_push_command,
     queue_size_command,
 )
+from aws_primitives_tool.kvstore.commands.set_commands import (
+    sadd_command,
+    scard_command,
+    sismember_command,
+    smembers_command,
+    srem_command,
+)
 from aws_primitives_tool.kvstore.commands.table_commands import (
     create_table_command,
     drop_table_command,
@@ -90,6 +97,13 @@ kvstore.add_command(leader_elect_command)
 kvstore.add_command(leader_heartbeat_command)
 kvstore.add_command(leader_check_command)
 kvstore.add_command(leader_resign_command)
+
+# Register set commands
+kvstore.add_command(sadd_command)
+kvstore.add_command(srem_command)
+kvstore.add_command(sismember_command)
+kvstore.add_command(smembers_command)
+kvstore.add_command(scard_command)
 
 
 if __name__ == "__main__":
