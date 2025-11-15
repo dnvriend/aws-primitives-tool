@@ -20,12 +20,12 @@
 - [x] `lock-check` - Check lock status
 - [x] `lock-extend` - Extend lock TTL
 
-## Phase 5 - Queue Operations
-- [ ] `queue-push` - Push to queue (FIFO)
-- [ ] `queue-pop` - Pop from queue
-- [ ] `queue-peek` - Peek at queue items
-- [ ] `queue-size` - Count queue items
-- [ ] `queue-ack` - Acknowledge processed item
+## Phase 5 Complete ✅
+- [x] `queue-push` - Push to queue (FIFO with priority)
+- [x] `queue-pop` - Pop from queue (with visibility timeout)
+- [x] `queue-peek` - Peek at queue items
+- [x] `queue-size` - Count queue items
+- [x] `queue-ack` - Acknowledge processed item
 
 ## Phase 6 - Leader Election Operations
 - [ ] `leader-elect` - Attempt to become leader
@@ -51,7 +51,7 @@
 - [ ] `transaction` - Execute multiple operations atomically (with --file flag)
 
 ## Future Enhancements
-- [ ] Add priority queues (queue-push with --priority)
+- [x] Add priority queues (queue-push with --priority) ✅ Implemented in Phase 5
 - [ ] Add batch operations (batch-get, batch-set)
 - [x] Add conditional updates (--if-value for delete) ✅ Implemented in Phase 2
 - [ ] Add query operations (query by type, TTL, etc.)

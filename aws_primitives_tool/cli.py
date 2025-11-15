@@ -24,6 +24,13 @@ from aws_primitives_tool.kvstore.commands.lock_commands import (
     lock_extend_command,
     lock_release_command,
 )
+from aws_primitives_tool.kvstore.commands.queue_commands import (
+    queue_ack_command,
+    queue_peek_command,
+    queue_pop_command,
+    queue_push_command,
+    queue_size_command,
+)
 from aws_primitives_tool.kvstore.commands.table_commands import (
     create_table_command,
     drop_table_command,
@@ -64,6 +71,13 @@ kvstore.add_command(lock_acquire_command)
 kvstore.add_command(lock_release_command)
 kvstore.add_command(lock_extend_command)
 kvstore.add_command(lock_check_command)
+
+# Register queue commands
+kvstore.add_command(queue_push_command)
+kvstore.add_command(queue_pop_command)
+kvstore.add_command(queue_peek_command)
+kvstore.add_command(queue_size_command)
+kvstore.add_command(queue_ack_command)
 
 
 if __name__ == "__main__":

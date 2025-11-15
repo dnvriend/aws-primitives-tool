@@ -197,6 +197,32 @@ class DynamoDBClient:
             self._handle_error(e)
             raise  # For type checker
 
+    def query_count(
+        self,
+        key_condition_expression: Any,
+    ) -> int:
+        """
+        Query and count items by key condition (efficient count operation).
+
+        Args:
+            key_condition_expression: Key condition expression
+
+        Returns:
+            Count of items matching the condition
+
+        Raises:
+            KVStoreError: For DynamoDB errors
+        """
+        try:
+            response = self.table.query(
+                KeyConditionExpression=key_condition_expression,
+                Select="COUNT",
+            )
+            return response.get("Count", 0)
+        except ClientError as e:
+            self._handle_error(e)
+            raise  # For type checker
+
     def _handle_error(self, error: ClientError) -> None:
         """
         Convert boto3 errors to kvstore exceptions.
