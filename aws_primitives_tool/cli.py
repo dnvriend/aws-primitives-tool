@@ -6,14 +6,33 @@ and has been reviewed and tested by a human.
 
 import click
 
-from aws_primitives_tool.utils import get_greeting
+from aws_primitives_tool.kvstore.commands.kv_commands import get_command, set_command
+from aws_primitives_tool.kvstore.commands.table_commands import (
+    create_table_command,
+    drop_table_command,
+)
 
 
-@click.command()
+@click.group()
 @click.version_option(version="0.1.0")
 def main() -> None:
     """A CLI that provides AWS serverless primitives as composable CLI commands"""
-    click.echo(get_greeting())
+    pass
+
+
+@main.group("kvstore")
+def kvstore() -> None:
+    """DynamoDB-backed key-value store with atomic operations"""
+    pass
+
+
+# Register table commands
+kvstore.add_command(create_table_command)
+kvstore.add_command(drop_table_command)
+
+# Register kv commands
+kvstore.add_command(set_command)
+kvstore.add_command(get_command)
 
 
 if __name__ == "__main__":
