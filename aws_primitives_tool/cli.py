@@ -18,6 +18,12 @@ from aws_primitives_tool.kvstore.commands.kv_commands import (
     list_command,
     set_command,
 )
+from aws_primitives_tool.kvstore.commands.lock_commands import (
+    lock_acquire_command,
+    lock_check_command,
+    lock_extend_command,
+    lock_release_command,
+)
 from aws_primitives_tool.kvstore.commands.table_commands import (
     create_table_command,
     drop_table_command,
@@ -52,6 +58,12 @@ kvstore.add_command(list_command)
 kvstore.add_command(inc_command)
 kvstore.add_command(dec_command)
 kvstore.add_command(get_counter_command)
+
+# Register lock commands
+kvstore.add_command(lock_acquire_command)
+kvstore.add_command(lock_release_command)
+kvstore.add_command(lock_extend_command)
+kvstore.add_command(lock_check_command)
 
 
 if __name__ == "__main__":

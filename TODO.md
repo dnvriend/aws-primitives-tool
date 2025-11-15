@@ -14,11 +14,11 @@
 - [x] `dec` - Atomic decrement
 - [x] `get-counter` - Read counter value
 
-## Phase 4 - Lock Operations
-- [ ] `lock-acquire` - Acquire distributed lock (with wait + exponential backoff)
-- [ ] `lock-release` - Release lock
-- [ ] `lock-check` - Check lock status
-- [ ] `lock-extend` - Extend lock TTL
+## Phase 4 Complete ✅
+- [x] `lock-acquire` - Acquire distributed lock (with wait + exponential backoff)
+- [x] `lock-release` - Release lock
+- [x] `lock-check` - Check lock status
+- [x] `lock-extend` - Extend lock TTL
 
 ## Phase 5 - Queue Operations
 - [ ] `queue-push` - Push to queue (FIFO)
