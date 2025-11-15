@@ -6,6 +6,11 @@ and has been reviewed and tested by a human.
 
 import click
 
+from aws_primitives_tool.kvstore.commands.counter_commands import (
+    dec_command,
+    get_counter_command,
+    inc_command,
+)
 from aws_primitives_tool.kvstore.commands.kv_commands import (
     delete_command,
     exists_command,
@@ -42,6 +47,11 @@ kvstore.add_command(get_command)
 kvstore.add_command(exists_command)
 kvstore.add_command(delete_command)
 kvstore.add_command(list_command)
+
+# Register counter commands
+kvstore.add_command(inc_command)
+kvstore.add_command(dec_command)
+kvstore.add_command(get_counter_command)
 
 
 if __name__ == "__main__":

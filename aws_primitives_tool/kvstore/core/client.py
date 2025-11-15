@@ -124,6 +124,50 @@ class DynamoDBClient:
             self._handle_error(e)
             raise  # For type checker
 
+    def update_item(
+        self,
+        key: dict[str, Any],
+        update_expression: str,
+        expression_attribute_names: dict[str, str] | None = None,
+        expression_attribute_values: dict[str, Any] | None = None,
+        condition_expression: str | None = None,
+        return_values: str = "NONE",
+    ) -> dict[str, Any]:
+        """
+        Update item with expression.
+
+        Args:
+            key: Key to update
+            update_expression: Update expression
+            expression_attribute_names: Optional expression attribute names
+            expression_attribute_values: Optional expression attribute values
+            condition_expression: Optional condition expression
+            return_values: What to return (NONE, ALL_OLD, ALL_NEW, etc.)
+
+        Returns:
+            Response from DynamoDB
+
+        Raises:
+            ConditionFailedError: If condition fails
+            KVStoreError: For other DynamoDB errors
+        """
+        try:
+            kwargs: dict[str, Any] = {
+                "Key": key,
+                "UpdateExpression": update_expression,
+                "ReturnValues": return_values,
+            }
+            if expression_attribute_names:
+                kwargs["ExpressionAttributeNames"] = expression_attribute_names
+            if expression_attribute_values:
+                kwargs["ExpressionAttributeValues"] = expression_attribute_values
+            if condition_expression:
+                kwargs["ConditionExpression"] = condition_expression
+            return self.table.update_item(**kwargs)  # type: ignore[return-value]
+        except ClientError as e:
+            self._handle_error(e)
+            raise  # For type checker
+
     def query(
         self,
         key_condition_expression: Any,

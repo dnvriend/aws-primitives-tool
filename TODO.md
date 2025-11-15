@@ -9,10 +9,10 @@
 - [x] `exists` - Check if key exists
 - [x] `list` - List keys by prefix
 
-## Phase 3 - Counter Operations
-- [ ] `inc` - Atomic increment
-- [ ] `dec` - Atomic decrement
-- [ ] `get-counter` - Read counter value
+## Phase 3 Complete ✅
+- [x] `inc` - Atomic increment
+- [x] `dec` - Atomic decrement
+- [x] `get-counter` - Read counter value
 
 ## Phase 4 - Lock Operations
 - [ ] `lock-acquire` - Acquire distributed lock (with wait + exponential backoff)
