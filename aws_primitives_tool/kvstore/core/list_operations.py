@@ -41,10 +41,11 @@ def prepend_to_list(
     """
     # Construct keys
     # PK: list:{list_name}
-    # SK: negative timestamp for LIFO ordering
+    # SK: negative timestamp with microsecond precision for LIFO ordering
     pk = format_key(PREFIX_LIST, list_name)
     timestamp = int(time.time())
-    sk = str(-timestamp)  # Negative for LIFO - newest items sort first
+    timestamp_ns = time.time_ns()  # Nanosecond precision to prevent collisions
+    sk = str(-timestamp_ns)  # Negative for LIFO - newest items sort first
 
     # Build item
     item: dict[str, Any] = {
@@ -91,10 +92,11 @@ def append_to_list(
     """
     # Construct keys
     # PK: list:{list_name}
-    # SK: positive timestamp for FIFO ordering
+    # SK: positive timestamp with microsecond precision for FIFO ordering
     pk = format_key(PREFIX_LIST, list_name)
     timestamp = int(time.time())
-    sk = str(timestamp)  # Positive for FIFO - oldest items sort first
+    timestamp_ns = time.time_ns()  # Nanosecond precision to prevent collisions
+    sk = str(timestamp_ns)  # Positive for FIFO - oldest items sort first
 
     # Build item
     item: dict[str, Any] = {
@@ -192,14 +194,12 @@ def pop_last(
     """
     pk = format_key(PREFIX_LIST, list_name)
 
-    # Query for last item (largest SK) - use client.table.query directly for ScanIndexForward
-    response = client.table.query(
-        KeyConditionExpression=Key(ATTR_PK).eq(pk),
-        ScanIndexForward=False,  # Descending order
-        Limit=1,
+    # Query for last item (largest SK) with descending order
+    items = client.query(
+        key_condition_expression=Key(ATTR_PK).eq(pk),
+        limit=1,
+        scan_index_forward=False,  # Descending order
     )
-
-    items = response.get("Items", [])
 
     if not items:
         return None

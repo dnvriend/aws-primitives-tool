@@ -172,6 +172,7 @@ class DynamoDBClient:
         self,
         key_condition_expression: Any,
         limit: int | None = None,
+        scan_index_forward: bool = True,
     ) -> list[dict[str, Any]]:
         """
         Query items by key condition.
@@ -179,6 +180,7 @@ class DynamoDBClient:
         Args:
             key_condition_expression: Key condition expression
             limit: Maximum number of items to return
+            scan_index_forward: True for ascending (default), False for descending
 
         Returns:
             List of items
@@ -187,7 +189,10 @@ class DynamoDBClient:
             KVStoreError: For DynamoDB errors
         """
         try:
-            kwargs: dict[str, Any] = {"KeyConditionExpression": key_condition_expression}
+            kwargs: dict[str, Any] = {
+                "KeyConditionExpression": key_condition_expression,
+                "ScanIndexForward": scan_index_forward,
+            }
             if limit:
                 kwargs["Limit"] = limit
 

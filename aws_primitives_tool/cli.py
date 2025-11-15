@@ -27,6 +27,7 @@ from aws_primitives_tool.kvstore.commands.leader_commands import (
 from aws_primitives_tool.kvstore.commands.list_commands import (
     lpop_command,
     lpush_command,
+    lrange_command,
     rpop_command,
     rpush_command,
 )
@@ -114,9 +115,10 @@ kvstore.add_command(scard_command)
 
 # Register list commands
 kvstore.add_command(lpush_command)
+kvstore.add_command(rpush_command)
 kvstore.add_command(lpop_command)
 kvstore.add_command(rpop_command)
-kvstore.add_command(rpush_command)
+kvstore.add_command(lrange_command)
 
 if __name__ == "__main__":
     main()
