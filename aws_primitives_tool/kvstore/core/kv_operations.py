@@ -8,7 +8,7 @@ and has been reviewed and tested by a human.
 import time
 from typing import Any
 
-from ..constants import ATTR_PK, ATTR_SK, PREFIX_KV
+from ..constants import ATTR_PK, ATTR_SK, ATTR_TYPE, PREFIX_KV
 from ..exceptions import KeyNotFoundError
 from ..models import ItemType
 from ..utils import format_key
@@ -171,18 +171,19 @@ def list_keys(client: DynamoDBClient, prefix: str = "", limit: int | None = None
     Returns:
         Dictionary with prefix, keys list, and count
     """
-    from boto3.dynamodb.conditions import Key
+    from boto3.dynamodb.conditions import Attr
 
-    # Build the key condition
+    # Build the filter expression
+    filter_expression: Any
     if prefix:
-        # Query for specific prefix
+        # Scan for specific prefix
         pk_value = format_key(PREFIX_KV, prefix)
-        key_condition = Key(ATTR_PK).begins_with(pk_value)
+        filter_expression = Attr(ATTR_PK).begins_with(pk_value) & Attr(ATTR_TYPE).eq("kv")
     else:
-        # Query for all KV items (PK starts with "kv:")
-        key_condition = Key(ATTR_PK).begins_with(PREFIX_KV + ":")
+        # Scan for all KV items (type = "kv")
+        filter_expression = Attr(ATTR_TYPE).eq("kv")
 
-    items = client.query(key_condition, limit)
+    items = client.scan(filter_expression, limit)
 
     # Transform items to output format
     keys = []

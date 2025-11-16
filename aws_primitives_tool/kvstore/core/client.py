@@ -202,6 +202,37 @@ class DynamoDBClient:
             self._handle_error(e)
             raise  # For type checker
 
+    def scan(
+        self,
+        filter_expression: Any,
+        limit: int | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Scan items with filter expression.
+
+        Args:
+            filter_expression: Filter expression
+            limit: Maximum number of items to return
+
+        Returns:
+            List of items
+
+        Raises:
+            KVStoreError: For DynamoDB errors
+        """
+        try:
+            kwargs: dict[str, Any] = {
+                "FilterExpression": filter_expression,
+            }
+            if limit:
+                kwargs["Limit"] = limit
+
+            response = self.table.scan(**kwargs)
+            return response.get("Items", [])
+        except ClientError as e:
+            self._handle_error(e)
+            raise  # For type checker
+
     def query_count(
         self,
         key_condition_expression: Any,

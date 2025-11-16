@@ -152,9 +152,13 @@ def get_range(
     pk = format_key(PREFIX_LIST, list_name)
 
     # Get all items (we need to for negative indexing and slicing)
+    # Use descending order (ScanIndexForward=False) to get items in semantic order:
+    # - For lpush (negative timestamps): descending gives smallest-first (most negative) = newest-first (LIFO)
+    # - For rpush (positive timestamps): descending gives largest-first = last-first
+    # Note: This returns items in the order they would appear in a standard list
     response = client.table.query(
         KeyConditionExpression=Key(ATTR_PK).eq(pk),
-        ScanIndexForward=True,
+        ScanIndexForward=False,
     )
 
     items = response.get("Items", [])
@@ -178,9 +182,9 @@ def pop_last(
     """
     Remove and return last item from list (from tail/right side).
 
-    Uses descending query (ScanIndexForward=False) to get item with largest SK.
-    - For lpush lists (negative timestamps): largest SK = most recently pushed (LIFO)
-    - For rpush lists (positive timestamps): largest SK = last item appended (LIFO)
+    Uses ascending query (ScanIndexForward=True) to get item with largest SK (least negative).
+    - For lpush lists (negative timestamps): ascending order gives largest SK first = oldest item
+    - For rpush lists (positive timestamps): ascending order gives smallest SK first = first item
 
     Args:
         client: DynamoDB client
@@ -194,11 +198,11 @@ def pop_last(
     """
     pk = format_key(PREFIX_LIST, list_name)
 
-    # Query for last item (largest SK) with descending order
+    # Query for last item (largest/least negative SK) with ascending order
     items = client.query(
         key_condition_expression=Key(ATTR_PK).eq(pk),
         limit=1,
-        scan_index_forward=False,  # Descending - get largest SK
+        scan_index_forward=True,  # Ascending - get largest SK (oldest for lpush)
     )
 
     if not items:
@@ -228,9 +232,9 @@ def pop_first(
     """
     Remove and return first item from list (from head/left side).
 
-    Uses ascending query (ScanIndexForward=True) to get item with smallest SK.
-    - For lpush lists (negative timestamps): smallest SK = oldest item pushed
-    - For rpush lists (positive timestamps): smallest SK = first item appended (FIFO)
+    Uses descending query (ScanIndexForward=False) to get item with smallest SK (most negative).
+    - For lpush lists (negative timestamps): descending order gives smallest SK first = newest item (LIFO)
+    - For rpush lists (positive timestamps): descending order gives largest SK first = last item
 
     Args:
         client: DynamoDB client
@@ -244,11 +248,11 @@ def pop_first(
     """
     pk = format_key(PREFIX_LIST, list_name)
 
-    # Query for first item (smallest SK) with ascending order
+    # Query for first item (smallest/most negative SK) with descending order
     items = client.query(
         key_condition_expression=Key(ATTR_PK).eq(pk),
         limit=1,
-        scan_index_forward=True,  # Ascending - get smallest SK
+        scan_index_forward=False,  # Descending - get smallest SK (newest for lpush)
     )
 
     if not items:

@@ -208,11 +208,12 @@ def _build_update_item(
                     ATTR_PK: {"S": pk},
                     ATTR_SK: {"S": sk},
                 },
-                "UpdateExpression": f"ADD #val :val SET {ATTR_UPDATED_AT} = :ts",
-                "ExpressionAttributeNames": {"#val": ATTR_VALUE},
+                "UpdateExpression": f"ADD #val :val SET {ATTR_UPDATED_AT} = :ts, #type = :type",
+                "ExpressionAttributeNames": {"#val": ATTR_VALUE, "#type": ATTR_TYPE},
                 "ExpressionAttributeValues": {
                     ":val": {"N": str(value)},
                     ":ts": {"N": str(timestamp)},
+                    ":type": {"S": "counter"},
                 },
             }
         }
@@ -229,11 +230,12 @@ def _build_update_item(
                     ATTR_PK: {"S": pk},
                     ATTR_SK: {"S": sk},
                 },
-                "UpdateExpression": f"SET #val = :val, {ATTR_UPDATED_AT} = :ts",
-                "ExpressionAttributeNames": {"#val": ATTR_VALUE},
+                "UpdateExpression": f"SET #val = :val, {ATTR_UPDATED_AT} = :ts, #type = :type",
+                "ExpressionAttributeNames": {"#val": ATTR_VALUE, "#type": ATTR_TYPE},
                 "ExpressionAttributeValues": {
                     ":val": {"S": str(value)},
                     ":ts": {"N": str(timestamp)},
+                    ":type": {"S": op_type or "kv"},
                 },
             }
         }
