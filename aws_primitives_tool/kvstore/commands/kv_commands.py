@@ -9,13 +9,15 @@ import click
 
 from ..core.client import DynamoDBClient
 from ..core.kv_operations import delete_value, exists_value, get_value, list_keys, set_value
+from ..doc_data import get_doc_data
+from ..doc_generator import display_doc, generate_doc
 from ..exceptions import ConditionFailedError, KeyNotFoundError, KVStoreError
 from ..utils import error_json, error_text, output_json, output_text
 
 
 @click.command("set")
-@click.argument("key")
-@click.argument("value")
+@click.argument("key", required=False)
+@click.argument("value", required=False)
 @click.option("--ttl", type=int, help="TTL in seconds")
 @click.option("--if-not-exists", is_flag=True, help="Only set if key doesn't exist")
 @click.option(
@@ -28,11 +30,16 @@ from ..utils import error_json, error_text, output_json, output_text
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
 @click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--doc",
+    is_flag=True,
+    help="Show AI agent-optimized documentation (CS semantics, guarantees, composability)",  # noqa: E501
+)
 @click.pass_context
 def set_command(
     ctx: click.Context,
-    key: str,
-    value: str,
+    key: str | None,
+    value: str | None,
     ttl: int | None,
     if_not_exists: bool,
     table: str,
@@ -40,6 +47,7 @@ def set_command(
     profile: str | None,
     text: bool,
     verbose: bool,
+    doc: bool,
 ) -> None:
     """Store a key-value pair.
 
@@ -65,6 +73,22 @@ def set_command(
         Returns JSON:
         {"key": "mykey", "value": "hello world", "created_at": 1234567890}
     """
+    # Handle --doc flag
+    if doc:
+        doc_data = get_doc_data("set")
+        if doc_data:
+            doc_content = generate_doc(**doc_data)
+            display_doc(doc_content)
+        else:
+            click.echo("Documentation not available for: set", err=True)
+            ctx.exit(1)
+
+    # Validate required arguments when not using --doc
+    if key is None or value is None:
+        click.echo("Error: Missing required arguments KEY and VALUE", err=True)
+        click.echo("Try 'aws-primitives-tool kvstore set --help' for usage", err=True)
+        ctx.exit(2)
+
     try:
         if verbose:
             click.echo(f"Setting key '{key}'...", err=True)

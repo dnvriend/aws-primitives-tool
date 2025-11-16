@@ -153,7 +153,8 @@ def get_range(
 
     # Get all items (we need to for negative indexing and slicing)
     # Use descending order (ScanIndexForward=False) to get items in semantic order:
-    # - For lpush (negative timestamps): descending gives smallest-first (most negative) = newest-first (LIFO)
+    # - For lpush (negative timestamps): descending gives smallest-first (most negative)
+    #   = newest-first (LIFO)  # noqa: E501
     # - For rpush (positive timestamps): descending gives largest-first = last-first
     # Note: This returns items in the order they would appear in a standard list
     response = client.table.query(
@@ -233,7 +234,8 @@ def pop_first(
     Remove and return first item from list (from head/left side).
 
     Uses descending query (ScanIndexForward=False) to get item with smallest SK (most negative).
-    - For lpush lists (negative timestamps): descending order gives smallest SK first = newest item (LIFO)
+    - For lpush lists (negative timestamps): descending order gives smallest SK first
+      = newest item (LIFO)  # noqa: E501
     - For rpush lists (positive timestamps): descending order gives largest SK first = last item
 
     Args:
