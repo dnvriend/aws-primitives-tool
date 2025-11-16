@@ -10,6 +10,7 @@ import click
 from ..core.client import DynamoDBClient
 from ..core.list_operations import append_to_list, get_range, pop_first, pop_last, prepend_to_list
 from ..exceptions import KVStoreError
+from ..logging_config import get_logger, setup_logging
 from ..utils import (
     error_json,
     error_text,
@@ -18,6 +19,8 @@ from ..utils import (
     validate_key,
     validate_table_name,
 )
+
+logger = get_logger(__name__)
 
 
 @click.command("lpush")
@@ -32,7 +35,12 @@ from ..utils import (
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def lpush_command(
     ctx: click.Context,
@@ -42,7 +50,7 @@ def lpush_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Prepend value to list.
 
@@ -82,13 +90,15 @@ def lpush_command(
         Returns JSON:
         {"list": "mylist", "value": "first item", "position": "head"}
     """
+    setup_logging(verbose)
+
     try:
         # Validate inputs
         validate_table_name(table)
         validate_key(list_name)
 
-        if verbose:
-            click.echo(f"Prepending value to list '{list_name}'...", err=True)
+        logger.info(f"Prepending value to list '{list_name}'")
+        logger.debug(f"Table: {table}, Value: {value}")
 
         # Execute operation
         client = DynamoDBClient(table, region, profile)
@@ -129,7 +139,12 @@ def lpush_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def rpush_command(
     ctx: click.Context,
@@ -139,7 +154,7 @@ def rpush_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Append value to list.
 
@@ -179,13 +194,15 @@ def rpush_command(
         Returns JSON:
         {"list": "mylist", "value": "last item", "position": "tail"}
     """
+    setup_logging(verbose)
+
     try:
         # Validate inputs
         validate_table_name(table)
         validate_key(list_name)
 
-        if verbose:
-            click.echo(f"Appending value to list '{list_name}'...", err=True)
+        logger.info(f"Appending value to list '{list_name}'")
+        logger.debug(f"Table: {table}, Value: {value}")
 
         # Execute operation
         client = DynamoDBClient(table, region, profile)
@@ -226,7 +243,12 @@ def rpush_command(
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
 @click.option("--quiet", is_flag=True, help="Suppress output")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def lpop_command(
     ctx: click.Context,
@@ -236,7 +258,7 @@ def lpop_command(
     profile: str | None,
     text: bool,
     quiet: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Remove and return first item from list.
 
@@ -265,13 +287,15 @@ def lpop_command(
             echo "Processed one task"
         done
     """
+    setup_logging(verbose)
+
     try:
         # Validate inputs
         validate_table_name(table)
         validate_key(list_name)
 
-        if verbose:
-            click.echo(f"Popping first item from list '{list_name}'...", err=True)
+        logger.info(f"Popping first item from list '{list_name}'")
+        logger.debug(f"Table: {table}")
 
         # Execute operation
         client = DynamoDBClient(table, region, profile)
@@ -321,7 +345,12 @@ def lpop_command(
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
 @click.option("--quiet", is_flag=True, help="Suppress output")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def lrange_command(
     ctx: click.Context,
@@ -333,7 +362,7 @@ def lrange_command(
     profile: str | None,
     text: bool,
     quiet: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Get range of items from list.
 
@@ -374,15 +403,15 @@ def lrange_command(
         Returns JSON:
         {"list": "mylist", "start": 0, "stop": 5, "count": 5, "items": ["item1", "item2", ...]}
     """
+    setup_logging(verbose)
+
     try:
         # Validate inputs
         validate_table_name(table)
         validate_key(list_name)
 
-        if verbose:
-            click.echo(
-                f"Getting range from list '{list_name}' (start={start}, stop={stop})...", err=True
-            )
+        logger.info(f"Getting range from list '{list_name}'")
+        logger.debug(f"Table: {table}, Start: {start}, Stop: {stop}")
 
         # Execute operation
         client = DynamoDBClient(table, region, profile)
@@ -427,7 +456,12 @@ def lrange_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def rpop_command(
     ctx: click.Context,
@@ -436,7 +470,7 @@ def rpop_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Remove and return last item from list.
 
@@ -490,13 +524,15 @@ def rpop_command(
         Returns JSON when list empty:
         {"list": "mylist", "exists": false}
     """
+    setup_logging(verbose)
+
     try:
         # Validate inputs
         validate_table_name(table)
         validate_key(list_name)
 
-        if verbose:
-            click.echo(f"Popping last item from list '{list_name}'...", err=True)
+        logger.info(f"Popping last item from list '{list_name}'")
+        logger.debug(f"Table: {table}")
 
         # Execute operation
         client = DynamoDBClient(table, region, profile)

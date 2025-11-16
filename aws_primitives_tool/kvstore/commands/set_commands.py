@@ -10,8 +10,10 @@ import click
 from ..core.client import DynamoDBClient
 from ..core.set_operations import add_to_set, get_members, get_set_size, is_member, remove_from_set
 from ..exceptions import KVStoreError
+from ..logging_config import get_logger, setup_logging
 from ..utils import error_json, error_text, output_json, output_text
 
+logger = get_logger(__name__)
 
 @click.command("sadd")
 @click.argument("set_name")
@@ -25,7 +27,12 @@ from ..utils import error_json, error_text, output_json, output_text
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def sadd_command(
     ctx: click.Context,
@@ -35,7 +42,7 @@ def sadd_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Add a member to a set.
 
@@ -68,9 +75,10 @@ def sadd_command(
         Returns JSON:
         {"set": "active-agents", "member": "agent-001", "added": true}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Adding member '{member}' to set '{set_name}'...", err=True)
+        logger.info(f"Adding member '{member}' to set '{set_name}'")
 
         client = DynamoDBClient(table, region, profile)
         result = add_to_set(client, set_name, member)
@@ -99,7 +107,12 @@ def sadd_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def scard_command(
     ctx: click.Context,
@@ -108,7 +121,7 @@ def scard_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Get the size (cardinality) of a set.
 
@@ -137,9 +150,10 @@ def scard_command(
         Returns JSON:
         {"set": "active-agents", "size": 2}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Getting size of set '{set_name}'...", err=True)
+        logger.info(f"Getting size of set '{set_name}'")
 
         client = DynamoDBClient(table, region, profile)
         result = get_set_size(client, set_name)
@@ -169,7 +183,12 @@ def scard_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def srem_command(
     ctx: click.Context,
@@ -179,7 +198,7 @@ def srem_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Remove member from set.
 
@@ -205,9 +224,10 @@ def srem_command(
         Returns JSON:
         {"set": "active-agents", "member": "agent-001", "removed": true}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Removing member '{member}' from set '{set_name}'...", err=True)
+        logger.info(f"Removing member '{member}' from set '{set_name}'")
 
         client = DynamoDBClient(table, region, profile)
         result = remove_from_set(client, set_name, member)
@@ -236,7 +256,12 @@ def srem_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def smembers_command(
     ctx: click.Context,
@@ -245,7 +270,7 @@ def smembers_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """List all members of a set.
 
@@ -277,9 +302,10 @@ def smembers_command(
         Returns JSON:
         {"set": "active-agents", "members": ["agent-123", "agent-456"], "count": 2}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Getting members of set '{set_name}'...", err=True)
+        logger.info(f"Getting members of set '{set_name}'")
 
         client = DynamoDBClient(table, region, profile)
         result = get_members(client, set_name)
@@ -314,7 +340,12 @@ def smembers_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def sismember_command(
     ctx: click.Context,
@@ -324,7 +355,7 @@ def sismember_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Check if member exists in set.
 
@@ -356,9 +387,10 @@ def sismember_command(
         Returns JSON:
         {"set": "active-agents", "member": "agent-001", "is_member": true}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Checking if '{member}' is in set '{set_name}'...", err=True)
+        logger.info(f"Checking if '{member}' is in set '{set_name}'")
 
         client = DynamoDBClient(table, region, profile)
         is_member_result = is_member(client, set_name, member)

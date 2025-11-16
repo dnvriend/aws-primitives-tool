@@ -12,8 +12,10 @@ from ..core.kv_operations import delete_value, exists_value, get_value, list_key
 from ..doc_data import get_doc_data
 from ..doc_generator import display_doc, generate_doc
 from ..exceptions import ConditionFailedError, KeyNotFoundError, KVStoreError
+from ..logging_config import get_logger, setup_logging
 from ..utils import error_json, error_text, output_json, output_text
 
+logger = get_logger(__name__)
 
 @click.command("set")
 @click.argument("key", required=False)
@@ -29,7 +31,12 @@ from ..utils import error_json, error_text, output_json, output_text
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.option(
     "--doc",
     is_flag=True,
@@ -46,7 +53,7 @@ def set_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
     doc: bool,
 ) -> None:
     """Store a key-value pair.
@@ -83,15 +90,18 @@ def set_command(
             click.echo("Documentation not available for: set", err=True)
             ctx.exit(1)
 
+    # Setup logging based on verbosity level
+    setup_logging(verbose)
+
     # Validate required arguments when not using --doc
     if key is None or value is None:
-        click.echo("Error: Missing required arguments KEY and VALUE", err=True)
+        logger.error("Missing required arguments KEY and VALUE")
         click.echo("Try 'aws-primitives-tool kvstore set --help' for usage", err=True)
         ctx.exit(2)
 
     try:
-        if verbose:
-            click.echo(f"Setting key '{key}'...", err=True)
+        logger.info(f"Setting key '{key}'")
+        logger.debug(f"Table: {table}, Region: {region}, TTL: {ttl}")
 
         client = DynamoDBClient(table, region, profile)
         result = set_value(client, key, value, ttl, if_not_exists)
@@ -128,7 +138,12 @@ def set_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def get_command(
     ctx: click.Context,
@@ -138,7 +153,7 @@ def get_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Retrieve a value by key.
 
@@ -163,9 +178,11 @@ def get_command(
         Returns JSON:
         {"key": "mykey", "value": "hello world", "type": "kv", "created_at": 1234567890}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Getting key '{key}'...", err=True)
+        logger.info(f"Getting key '{key}'")
+        logger.debug(f"Table: {table}, Region: {region}, Default: {default}")
 
         client = DynamoDBClient(table, region, profile)
         result = get_value(client, key, default)
@@ -210,7 +227,12 @@ def get_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def exists_command(
     ctx: click.Context,
@@ -219,7 +241,7 @@ def exists_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Check if a key exists.
 
@@ -247,9 +269,11 @@ def exists_command(
         Returns JSON:
         {"key": "mykey", "exists": true}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Checking if key '{key}' exists...", err=True)
+        logger.info(f"Checking if key '{key}' exists")
+        logger.debug(f"Table: {table}, Region: {region}")
 
         client = DynamoDBClient(table, region, profile)
         exists = exists_value(client, key)
@@ -285,7 +309,12 @@ def exists_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def delete_command(
     ctx: click.Context,
@@ -295,7 +324,7 @@ def delete_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Delete a key-value pair.
 
@@ -316,9 +345,11 @@ def delete_command(
         Returns JSON:
         {"key": "mykey", "deleted": true}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Deleting key '{key}'...", err=True)
+        logger.info(f"Deleting key '{key}'")
+        logger.debug(f"Table: {table}, Region: {region}, Conditional: {if_value}")
 
         client = DynamoDBClient(table, region, profile)
         result = delete_value(client, key, if_value)
@@ -371,7 +402,12 @@ def delete_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def list_command(
     ctx: click.Context,
@@ -382,7 +418,7 @@ def list_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """List keys by prefix.
 
@@ -416,12 +452,14 @@ def list_command(
         config/api-key
         config/db-url
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            if prefix:
-                click.echo(f"Listing keys with prefix '{prefix}'...", err=True)
-            else:
-                click.echo("Listing all keys...", err=True)
+        if prefix:
+            logger.info(f"Listing keys with prefix '{prefix}'")
+        else:
+            logger.info("Listing all keys")
+        logger.debug(f"Table: {table}, Region: {region}, Limit: {limit}")
 
         client = DynamoDBClient(table, region, profile)
         result = list_keys(client, prefix, limit)

@@ -16,8 +16,10 @@ from ..core.lock_operations import (
     release_lock,
 )
 from ..exceptions import ConditionFailedError, KeyNotFoundError, KVStoreError, LockUnavailableError
+from ..logging_config import get_logger, setup_logging
 from ..utils import error_json, error_text, output_json, output_text
 
+logger = get_logger(__name__)
 
 @click.command("lock-acquire")
 @click.argument("lock_name")
@@ -38,7 +40,12 @@ from ..utils import error_json, error_text, output_json, output_text
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def lock_acquire_command(
     ctx: click.Context,
@@ -50,7 +57,7 @@ def lock_acquire_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Acquire a distributed lock.
 
@@ -79,15 +86,17 @@ def lock_acquire_command(
         Returns JSON:
         {"lock": "deploy-prod", "owner": "agent-123", "ttl": 1731696300, "acquired_at": 1731696000}
     """
+    setup_logging(verbose)
+
     try:
         # Generate default owner if not provided
         if not owner:
             owner = generate_default_owner()
 
-        if verbose:
-            click.echo(f"Acquiring lock '{lock_name}' as {owner}...", err=True)
-            if wait > 0:
-                click.echo(f"Will wait up to {wait} seconds with exponential backoff...", err=True)
+        logger.info(f"Acquiring lock '{lock_name}' as {owner}")
+        if wait > 0:
+            logger.debug(f"Wait: {wait}s with exponential backoff")
+        logger.debug(f"Table: {table}, TTL: {ttl}")
 
         client = DynamoDBClient(table, region, profile)
         result = acquire_lock(client, lock_name, ttl, owner, wait)
@@ -142,7 +151,12 @@ def lock_acquire_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def lock_release_command(
     ctx: click.Context,
@@ -152,7 +166,7 @@ def lock_release_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Release a distributed lock.
 
@@ -174,13 +188,15 @@ def lock_release_command(
         Returns JSON:
         {"lock": "deploy-prod", "released": true}
     """
+    setup_logging(verbose)
+
     try:
         # Generate default owner if not provided
         if not owner:
             owner = generate_default_owner()
 
-        if verbose:
-            click.echo(f"Releasing lock '{lock_name}' as {owner}...", err=True)
+        logger.info(f"Releasing lock '{lock_name}' as {owner}")
+        logger.debug(f"Table: {table}")
 
         client = DynamoDBClient(table, region, profile)
         result = release_lock(client, lock_name, owner)
@@ -215,8 +231,7 @@ def lock_release_command(
 
     except KeyNotFoundError:
         # Lock doesn't exist - treat as success (idempotent)
-        if verbose:
-            click.echo(f"Lock '{lock_name}' does not exist (already released)", err=True)
+        logger.info(f"Lock '{lock_name}' does not exist (already released)")
 
         result = {"lock": lock_name, "released": True}
 
@@ -249,7 +264,12 @@ def lock_release_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def lock_extend_command(
     ctx: click.Context,
@@ -260,7 +280,7 @@ def lock_extend_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Extend lock TTL.
 
@@ -289,13 +309,15 @@ def lock_extend_command(
         Returns JSON:
         {"lock": "deploy-prod", "owner": "agent-123", "ttl": 1731696900, "extended": true}
     """
+    setup_logging(verbose)
+
     try:
         # Generate default owner if not provided
         if not owner:
             owner = generate_default_owner()
 
-        if verbose:
-            click.echo(f"Extending lock '{lock_name}' as {owner} with TTL {ttl}s...", err=True)
+        logger.info(f"Extending lock '{lock_name}' as {owner}")
+        logger.debug(f"Table: {table}, New TTL: {ttl}s")
 
         client = DynamoDBClient(table, region, profile)
         result = extend_lock(client, lock_name, ttl, owner)
@@ -348,7 +370,12 @@ def lock_extend_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def lock_check_command(
     ctx: click.Context,
@@ -357,7 +384,7 @@ def lock_check_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Check if a lock is held.
 
@@ -386,9 +413,11 @@ def lock_check_command(
         Returns empty JSON if free:
         {"lock": "deploy-prod", "status": "free"}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Checking lock '{lock_name}'...", err=True)
+        logger.info(f"Checking lock '{lock_name}'")
+        logger.debug(f"Table: {table}")
 
         client = DynamoDBClient(table, region, profile)
         result = check_lock(client, lock_name)

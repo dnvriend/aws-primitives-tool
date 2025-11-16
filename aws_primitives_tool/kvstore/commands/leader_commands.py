@@ -11,8 +11,10 @@ from ..core.client import DynamoDBClient
 from ..core.leader_operations import check_leader, elect_leader, heartbeat_leader, resign_leader
 from ..core.lock_operations import generate_default_owner
 from ..exceptions import ConditionFailedError, KVStoreError, LeaderElectionError
+from ..logging_config import get_logger, setup_logging
 from ..utils import error_json, error_text, output_json, output_text
 
+logger = get_logger(__name__)
 
 @click.command("leader-elect")
 @click.argument("pool_name")
@@ -27,7 +29,12 @@ from ..utils import error_json, error_text, output_json, output_text
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def leader_elect_command(
     ctx: click.Context,
@@ -38,7 +45,7 @@ def leader_elect_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Elect leader in a pool using atomic conditional write.
 
@@ -94,16 +101,15 @@ def leader_elect_command(
         4 - Another agent is the leader
         3 - AWS error (table not found, credentials, etc.)
     """
+    setup_logging(verbose)
+
     try:
         # Generate default agent ID if not provided
         if not agent_id:
             agent_id = generate_default_owner()
 
-        if verbose:
-            click.echo(
-                f"Attempting leader election for pool '{pool_name}' as {agent_id}...", err=True
-            )
-            click.echo(f"Leadership lease TTL: {ttl} seconds", err=True)
+        logger.info(f"Leader election for pool '{pool_name}' as {agent_id}")
+        logger.debug(f"TTL: {ttl}s, Table: {table}")
 
         client = DynamoDBClient(table, region, profile)
         result = elect_leader(client, pool_name, agent_id, ttl)
@@ -159,7 +165,12 @@ def leader_elect_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def leader_resign_command(
     ctx: click.Context,
@@ -169,7 +180,7 @@ def leader_resign_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Resign from leader position.
 
@@ -197,13 +208,14 @@ def leader_resign_command(
         Returns JSON:
         {"pool": "deploy-pool", "resigned": true}
     """
+    setup_logging(verbose)
+
     try:
         # Generate default agent ID if not provided
         if not agent_id:
             agent_id = generate_default_owner()
 
-        if verbose:
-            click.echo(f"Resigning from leader pool '{pool_name}' as {agent_id}...", err=True)
+        logger.info(f"Resigning from leader pool '{pool_name}' as {agent_id}")
 
         client = DynamoDBClient(table, region, profile)
         result = resign_leader(client, pool_name, agent_id)
@@ -258,7 +270,12 @@ def leader_resign_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def leader_check_command(
     ctx: click.Context,
@@ -267,7 +284,7 @@ def leader_check_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Check if a leader exists for the pool.
 
@@ -296,9 +313,10 @@ def leader_check_command(
         Returns JSON if no leader:
         {"pool": "deploy-pool", "status": "no_leader"}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Checking leader for pool '{pool_name}'...", err=True)
+        logger.info(f"Checking leader for pool '{pool_name}'")
 
         client = DynamoDBClient(table, region, profile)
         result = check_leader(client, pool_name)
@@ -347,7 +365,12 @@ def leader_check_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def leader_heartbeat_command(
     ctx: click.Context,
@@ -358,7 +381,7 @@ def leader_heartbeat_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Send heartbeat to extend leadership lease.
 
@@ -392,16 +415,15 @@ def leader_heartbeat_command(
         Returns JSON:
         {"pool": "deploy-pool", "leader": "agent-123", "ttl": 1731696330, "heartbeat": true}
     """
+    setup_logging(verbose)
+
     try:
         # Generate default agent ID if not provided
         if not agent_id:
             agent_id = generate_default_owner()
 
-        if verbose:
-            click.echo(
-                f"Sending heartbeat for pool '{pool_name}' as {agent_id} with TTL {ttl}s...",
-                err=True,
-            )
+        logger.info(f"Heartbeat for pool '{pool_name}' as {agent_id}")
+        logger.debug(f"TTL: {ttl}s, Table: {table}")
 
         client = DynamoDBClient(table, region, profile)
         result = heartbeat_leader(client, pool_name, agent_id, ttl)

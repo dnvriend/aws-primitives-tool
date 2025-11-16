@@ -11,8 +11,10 @@ import click
 
 from ..core.table_operations import create_table, drop_table
 from ..exceptions import KVStoreError, TableAlreadyExistsError, TableNotFoundError
+from ..logging_config import get_logger, setup_logging
 from ..utils import error_json, error_text, output_json, output_text
 
+logger = get_logger(__name__)
 
 @click.command("create-table")
 @click.option(
@@ -30,7 +32,12 @@ from ..utils import error_json, error_text, output_json, output_text
     help="Billing mode (default: on-demand)",
 )
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def create_table_command(
     ctx: click.Context,
@@ -39,7 +46,7 @@ def create_table_command(
     profile: str | None,
     billing: str,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Create DynamoDB table for kvstore.
 
@@ -65,9 +72,11 @@ def create_table_command(
         Returns JSON with table details:
         {"table": "...", "status": "CREATING", "arn": "..."}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Creating table '{table}'...", err=True)
+        logger.info(f"Creating table '{table}'")
+        logger.debug(f"Region: {region}, Billing: {billing}")
 
         billing_mode: Literal["PAY_PER_REQUEST", "PROVISIONED"] = (
             "PAY_PER_REQUEST" if billing == "on-demand" else "PROVISIONED"
@@ -124,7 +133,12 @@ def create_table_command(
     help="Required flag to confirm table deletion",
 )
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def drop_table_command(
     ctx: click.Context,
@@ -133,7 +147,7 @@ def drop_table_command(
     profile: str | None,
     approve: bool,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Drop DynamoDB table for kvstore.
 
@@ -158,6 +172,8 @@ def drop_table_command(
         Returns JSON with confirmation:
         {"table": "...", "status": "DELETING"}
     """
+    setup_logging(verbose)
+
     if not approve:
         if text:
             click.echo("⚠️  WARNING: Table deletion requires approval", err=True)
@@ -176,8 +192,8 @@ def drop_table_command(
         ctx.exit(2)
 
     try:
-        if verbose:
-            click.echo(f"Dropping table '{table}'...", err=True)
+        logger.info(f"Dropping table '{table}'")
+        logger.debug(f"Region: {region}, Approved: {approve}")
 
         table_desc = drop_table(table, region, profile)
 

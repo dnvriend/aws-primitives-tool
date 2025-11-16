@@ -10,8 +10,10 @@ import click
 from ..core.client import DynamoDBClient
 from ..core.counter_operations import decrement_counter, get_counter, increment_counter
 from ..exceptions import KeyNotFoundError, KVStoreError
+from ..logging_config import get_logger, setup_logging
 from ..utils import error_json, error_text, output_json, output_text
 
+logger = get_logger(__name__)
 
 @click.command("inc")
 @click.argument("key")
@@ -26,7 +28,12 @@ from ..utils import error_json, error_text, output_json, output_text
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def inc_command(
     ctx: click.Context,
@@ -37,7 +44,7 @@ def inc_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Atomically increment a counter.
 
@@ -62,9 +69,11 @@ def inc_command(
         Returns JSON:
         {"key": "api-requests", "value": 123, "updated_at": 1234567890}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Incrementing counter '{key}' by {by}...", err=True)
+        logger.info(f"Incrementing counter '{key}' by {by}")
+        logger.debug(f"Table: {table}, Region: {region}, Create: {create}")
 
         client = DynamoDBClient(table, region, profile)
         result = increment_counter(client, key, by, create)
@@ -107,7 +116,12 @@ def inc_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def dec_command(
     ctx: click.Context,
@@ -117,7 +131,7 @@ def dec_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Atomically decrement a counter.
 
@@ -138,9 +152,11 @@ def dec_command(
         Returns JSON:
         {"key": "rate-limit-remaining", "value": 95, "updated_at": 1234567890}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Decrementing counter '{key}' by {by}...", err=True)
+        logger.info(f"Decrementing counter '{key}' by {by}")
+        logger.debug(f"Table: {table}, Region: {region}")
 
         client = DynamoDBClient(table, region, profile)
         result = decrement_counter(client, key, by)
@@ -182,7 +198,12 @@ def dec_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def get_counter_command(
     ctx: click.Context,
@@ -191,7 +212,7 @@ def get_counter_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Read counter value.
 
@@ -213,9 +234,11 @@ def get_counter_command(
         {"key": "api-requests", "value": 12345, "type": "counter",
          "created_at": 1234567890, "updated_at": 1234567900}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Getting counter '{key}'...", err=True)
+        logger.info(f"Getting counter '{key}'")
+        logger.debug(f"Table: {table}, Region: {region}")
 
         client = DynamoDBClient(table, region, profile)
         result = get_counter(client, key)

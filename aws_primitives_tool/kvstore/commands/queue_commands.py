@@ -16,8 +16,10 @@ from ..core.queue_operations import (
     push_to_queue,
 )
 from ..exceptions import KeyExistsError, KVStoreError
+from ..logging_config import get_logger, setup_logging
 from ..utils import error_json, error_text, output_json, output_text
 
+logger = get_logger(__name__)
 
 @click.command("queue-push")
 @click.argument("queue_name")
@@ -39,7 +41,12 @@ from ..utils import error_json, error_text, output_json, output_text
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def queue_push_command(
     ctx: click.Context,
@@ -52,7 +59,7 @@ def queue_push_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Push a message to a queue with priority and optional deduplication.
 
@@ -101,12 +108,11 @@ def queue_push_command(
          "priority": 5, "timestamp": 1234567890, "message_uuid": "abc-123",
          "dedup_id": "order-123-payment"}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(
-                f"Pushing message to queue '{queue_name}' with priority {priority}...",
-                err=True,
-            )
+        logger.info(f"Pushing message to queue '{queue_name}'")
+        logger.debug(f"Priority: {priority}, TTL: {ttl}, Dedup: {dedup_id}")
 
         client = DynamoDBClient(table, region, profile)
         result = push_to_queue(client, queue_name, data, priority, dedup_id, ttl)
@@ -171,7 +177,12 @@ def queue_push_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def queue_ack_command(
     ctx: click.Context,
@@ -181,7 +192,7 @@ def queue_ack_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Acknowledge (delete) a message from the queue.
 
@@ -208,9 +219,10 @@ def queue_ack_command(
         Returns JSON:
         {"queue": "notifications", "receipt": "queue:notifications#...", "acknowledged": true}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Acknowledging message from queue '{queue_name}'...", err=True)
+        logger.info(f"Acknowledging message from queue '{queue_name}'")
 
         client = DynamoDBClient(table, region, profile)
         result = acknowledge_message(client, queue_name, receipt)
@@ -245,7 +257,12 @@ def queue_ack_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def queue_peek_command(
     ctx: click.Context,
@@ -255,7 +272,7 @@ def queue_peek_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Peek at messages in a queue without consuming them.
 
@@ -289,9 +306,10 @@ def queue_peek_command(
             {"data": {...}, "priority": 10, "timestamp": 1234567891}
         ], "count": 2}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Peeking at queue '{queue_name}' (count: {count})...", err=True)
+        logger.info(f"Peeking at queue '{queue_name}' (count: {count})")
 
         client = DynamoDBClient(table, region, profile)
         result = peek_queue(client, queue_name, count)
@@ -326,7 +344,12 @@ def queue_peek_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def queue_size_command(
     ctx: click.Context,
@@ -335,7 +358,7 @@ def queue_size_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Get the size of a queue.
 
@@ -364,9 +387,10 @@ def queue_size_command(
         Returns JSON:
         {"queue": "notifications", "size": 42}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Getting size of queue '{queue_name}'...", err=True)
+        logger.info(f"Getting size of queue '{queue_name}'")
 
         client = DynamoDBClient(table, region, profile)
         result = get_queue_size(client, queue_name)
@@ -401,7 +425,12 @@ def queue_size_command(
 @click.option("--region", envvar="AWS_REGION", help="AWS region")
 @click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
 @click.option("--text", is_flag=True, help="Output as human-readable text")
-@click.option("--verbose", "-V", is_flag=True, help="Verbose output")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
 @click.pass_context
 def queue_pop_command(
     ctx: click.Context,
@@ -411,7 +440,7 @@ def queue_pop_command(
     region: str | None,
     profile: str | None,
     text: bool,
-    verbose: bool,
+    verbose: int,
 ) -> None:
     """Pop the oldest message from a queue (FIFO).
 
@@ -453,9 +482,10 @@ def queue_pop_command(
         Returns JSON when queue empty:
         {"queue": "tasks", "status": "empty"}
     """
+    setup_logging(verbose)
+
     try:
-        if verbose:
-            click.echo(f"Popping message from queue '{queue_name}'...", err=True)
+        logger.info(f"Popping message from queue '{queue_name}'")
 
         client = DynamoDBClient(table, region, profile)
         result = pop_from_queue(client, queue_name, visibility_timeout)
