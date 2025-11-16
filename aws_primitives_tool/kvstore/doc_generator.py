@@ -9,7 +9,6 @@ and has been reviewed and tested by a human.
 """
 
 
-
 def generate_doc(
     name: str,
     synopsis: str,
@@ -80,7 +79,7 @@ def generate_doc(
         for idx, example in enumerate(examples, 1):
             doc += f"### Example {idx}: {example['title']}\n"
             doc += "```bash\n"
-            doc += example['code']
+            doc += example["code"]
             doc += "\n```\n\n"
 
     # Composability
@@ -93,9 +92,9 @@ def generate_doc(
         for idx, comp in enumerate(composability, 1):
             doc += f"### Composition {idx}: {comp['title']}\n"
             doc += "```bash\n"
-            doc += comp['code']
+            doc += comp["code"]
             doc += "\n```\n"
-            if 'note' in comp:
+            if "note" in comp:
                 doc += f"_{comp['note']}_\n"
             doc += "\n"
 

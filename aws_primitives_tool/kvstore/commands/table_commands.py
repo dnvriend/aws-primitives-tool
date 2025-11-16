@@ -16,6 +16,7 @@ from ..utils import error_json, error_text, output_json, output_text
 
 logger = get_logger(__name__)
 
+
 @click.command("create-table")
 @click.option(
     "--table",
@@ -216,3 +217,44 @@ def drop_table_command(
         else:
             click.echo(error_json(str(e), "Check AWS credentials and permissions", 3), err=True)
         ctx.exit(3)
+
+
+# Alias: delete-table is the same as drop-table
+@click.command("delete-table")
+@click.option(
+    "--table",
+    envvar="KVSTORE_TABLE",
+    default="aws-primitives-tool-kvstore",
+    help="DynamoDB table name",
+)
+@click.option("--region", envvar="AWS_REGION", help="AWS region")
+@click.option("--profile", envvar="AWS_PROFILE", help="AWS profile")
+@click.option(
+    "--approve",
+    is_flag=True,
+    help="Required flag to confirm table deletion",
+)
+@click.option("--text", is_flag=True, help="Output as human-readable text")
+@click.option(
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase verbosity (-v INFO, -vv DEBUG, -vvv TRACE)",
+)
+@click.pass_context
+def delete_table_command(
+    ctx: click.Context,
+    table: str,
+    region: str | None,
+    profile: str | None,
+    approve: bool,
+    text: bool,
+    verbose: int,
+) -> None:
+    """Alias for drop-table command.
+
+    See 'aws-primitives-tool kvstore drop-table --help' for full documentation.
+    """
+    # Call the drop-table implementation directly
+    ctx.invoke(drop_table_command, table=table, region=region, profile=profile,
+               approve=approve, text=text, verbose=verbose)

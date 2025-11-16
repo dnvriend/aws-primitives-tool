@@ -53,6 +53,7 @@ from aws_primitives_tool.kvstore.commands.set_commands import (
 )
 from aws_primitives_tool.kvstore.commands.table_commands import (
     create_table_command,
+    delete_table_command,
     drop_table_command,
 )
 from aws_primitives_tool.kvstore.commands.transaction_commands import transaction_command
@@ -74,6 +75,7 @@ def kvstore() -> None:
 # Register table commands
 kvstore.add_command(create_table_command)
 kvstore.add_command(drop_table_command)
+kvstore.add_command(delete_table_command)  # Alias for drop-table
 
 # Register kv commands
 kvstore.add_command(set_command)

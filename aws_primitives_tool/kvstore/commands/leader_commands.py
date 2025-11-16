@@ -16,6 +16,7 @@ from ..utils import error_json, error_text, output_json, output_text
 
 logger = get_logger(__name__)
 
+
 @click.command("leader-elect")
 @click.argument("pool_name")
 @click.option("--ttl", type=int, default=30, help="Leadership lease TTL in seconds (default: 30)")

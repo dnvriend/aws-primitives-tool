@@ -15,6 +15,7 @@ from ..utils import error_json, error_text, output_json, output_text
 
 logger = get_logger(__name__)
 
+
 @click.command("inc")
 @click.argument("key")
 @click.option("--by", type=int, default=1, help="Amount to increment (default: 1)")

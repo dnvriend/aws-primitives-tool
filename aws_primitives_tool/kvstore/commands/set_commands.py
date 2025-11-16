@@ -15,6 +15,7 @@ from ..utils import error_json, error_text, output_json, output_text
 
 logger = get_logger(__name__)
 
+
 @click.command("sadd")
 @click.argument("set_name")
 @click.argument("member")

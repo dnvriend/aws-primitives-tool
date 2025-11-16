@@ -47,37 +47,37 @@ aws-primitives-tool kvstore set "user:alice:role" "admin"''',
         },
         {
             "title": "Session with TTL",
-            "code": '''# Create 1-hour session
+            "code": """# Create 1-hour session
 SESSION_ID=$(uuidgen)
 aws-primitives-tool kvstore set \\
   "session:$SESSION_ID" \\
   "user_id=123" \\
-  --ttl 3600''',
+  --ttl 3600""",
         },
         {
             "title": "Feature Flags",
-            "code": '''# Enable/disable features dynamically
+            "code": """# Enable/disable features dynamically
 aws-primitives-tool kvstore set "feature:new_ui" "enabled"
 aws-primitives-tool kvstore set "feature:beta_api" "disabled"
 
 # Application reads flag
-FLAG=$(aws-primitives-tool kvstore get "feature:new_ui")''',
+FLAG=$(aws-primitives-tool kvstore get "feature:new_ui")""",
         },
     ],
     "composability": [
         {
             "title": "Set + Get (Read-After-Write Verification)",
-            "code": '''aws-primitives-tool kvstore set "key1" "value1"
-aws-primitives-tool kvstore get "key1"  # Verify write succeeded''',
+            "code": """aws-primitives-tool kvstore set "key1" "value1"
+aws-primitives-tool kvstore get "key1"  # Verify write succeeded""",
         },
         {
             "title": "Set + Counter (Track Update Count)",
-            "code": '''aws-primitives-tool kvstore set "config:url" "https://new.api.com"
-aws-primitives-tool kvstore inc "config:url:version"  # Track changes''',
+            "code": """aws-primitives-tool kvstore set "config:url" "https://new.api.com"
+aws-primitives-tool kvstore inc "config:url:version"  # Track changes""",
         },
         {
             "title": "Set + Transaction (Atomic Multi-Key Update)",
-            "code": '''# Atomically update multiple keys
+            "code": """# Atomically update multiple keys
 cat > update.json <<EOF
 {
   "operations": [
@@ -86,7 +86,7 @@ cat > update.json <<EOF
   ]
 }
 EOF
-aws-primitives-tool kvstore transaction --file update.json''',
+aws-primitives-tool kvstore transaction --file update.json""",
         },
     ],
     "failure_modes": [
@@ -132,43 +132,43 @@ GET_DOC = {
     "examples": [
         {
             "title": "Configuration Loading with Defaults",
-            "code": '''# Load config with fallback defaults
+            "code": """# Load config with fallback defaults
 API_URL=$(aws-primitives-tool kvstore get "config:api_url" --default "https://api.default.com")
 TIMEOUT=$(aws-primitives-tool kvstore get "config:timeout" --default "30")
-RETRIES=$(aws-primitives-tool kvstore get "config:retries" --default "3")''',
+RETRIES=$(aws-primitives-tool kvstore get "config:retries" --default "3")""",
         },
         {
             "title": "Session Validation",
-            "code": '''# Check session before processing request
+            "code": """# Check session before processing request
 if aws-primitives-tool kvstore exists "session:$SESSION_ID"; then
   USER_DATA=$(aws-primitives-tool kvstore get "session:$SESSION_ID")
   echo "Valid session for: $USER_DATA"
 else
   echo "Session expired"
   exit 401
-fi''',
+fi""",
         },
         {
             "title": "Feature Flag Conditional Execution",
-            "code": '''# Execute different code paths based on feature flag
+            "code": """# Execute different code paths based on feature flag
 FEATURE=$(aws-primitives-tool kvstore get "feature:new_ui" --default "disabled")
 if [ "$FEATURE" = "enabled" ]; then
   ./run_new_ui.sh
 else
   ./run_old_ui.sh
-fi''',
+fi""",
         },
     ],
     "composability": [
         {
             "title": "Get + Conditional Set (Check-Then-Act Pattern)",
-            "code": '''# Cache-aside pattern
+            "code": """# Cache-aside pattern
 if aws-primitives-tool kvstore exists "cache:result"; then
   RESULT=$(aws-primitives-tool kvstore get "cache:result")
 else
   RESULT=$(expensive_computation)
   aws-primitives-tool kvstore set "cache:result" "$RESULT" --ttl 3600
-fi''',
+fi""",
             "note": "Note: Not atomic across get/set boundary",
         },
         {
@@ -227,55 +227,55 @@ INC_DOC = {
     "examples": [
         {
             "title": "API Request Metrics",
-            "code": '''# Count requests per endpoint (non-blocking)
+            "code": """# Count requests per endpoint (non-blocking)
 handle_request() {
   aws-primitives-tool kvstore inc "metrics:api:$ENDPOINT:requests" &
   # Process request immediately (don't wait for counter)
   process_request
-}''',
+}""",
         },
         {
             "title": "Distributed Rate Limiter",
-            "code": '''# Rate limit: 100 requests/minute per user
+            "code": """# Rate limit: 100 requests/minute per user
 WINDOW="$(date +%Y-%m-%d-%H-%M)"
 COUNT=$(aws-primitives-tool kvstore inc "ratelimit:$USER_ID:$WINDOW" --create | jq '.value')
 if [ "$COUNT" -gt 100 ]; then
   echo "Rate limit exceeded"
   exit 429
-fi''',
+fi""",
         },
         {
             "title": "Distributed ID Generation",
-            "code": '''# Generate unique sequential IDs across processes
+            "code": """# Generate unique sequential IDs across processes
 generate_order_id() {
   ID=$(aws-primitives-tool kvstore inc "sequence:order_id" --create | jq '.value')
   echo "ORDER-$(printf '%010d' $ID)"
 }
 
 # Usage: ORDER_ID=$(generate_order_id)
-# Result: ORDER-0000000042''',
+# Result: ORDER-0000000042""",
         },
         {
             "title": "Multi-Metric Collection",
-            "code": '''# Collect multiple metrics concurrently
+            "code": """# Collect multiple metrics concurrently
 aws-primitives-tool kvstore inc "metrics:requests" &
 aws-primitives-tool kvstore inc "metrics:bytes_in" --by $BODY_SIZE &
 aws-primitives-tool kvstore inc "metrics:cpu_ms" --by $CPU_TIME &
-wait  # All increments succeed atomically''',
+wait  # All increments succeed atomically""",
         },
     ],
     "composability": [
         {
             "title": "Inc + Threshold Alert (Conditional Logic)",
-            "code": '''# Alert when counter exceeds threshold
+            "code": """# Alert when counter exceeds threshold
 COUNT=$(aws-primitives-tool kvstore inc "errors:critical" | jq '.value')
 if [ "$COUNT" -gt 100 ]; then
   send_alert "Critical errors exceeded 100: current=$COUNT"
-fi''',
+fi""",
         },
         {
             "title": "Inc + Transaction (Atomic Multi-Counter Update)",
-            "code": '''# Atomically update multiple counters
+            "code": """# Atomically update multiple counters
 cat > metrics.json <<EOF
 {
   "operations": [
@@ -284,7 +284,7 @@ cat > metrics.json <<EOF
   ]
 }
 EOF
-aws-primitives-tool kvstore transaction --file metrics.json''',
+aws-primitives-tool kvstore transaction --file metrics.json""",
             "note": "Transaction provides atomicity across multiple counters",
         },
         {
