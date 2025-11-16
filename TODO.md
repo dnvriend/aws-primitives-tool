@@ -47,8 +47,8 @@
 - [x] `rpop` - Remove and return last item
 - [x] `lrange` - Get range of items
 
-## Phase 9 - Transaction Operations
-- [ ] `transaction` - Execute multiple operations atomically (with --file flag)
+## Phase 9 Complete ✅
+- [x] `transaction` - Execute multiple operations atomically (with --file flag)
 
 ## Future Enhancements
 - [x] Add priority queues (queue-push with --priority) ✅ Implemented in Phase 5

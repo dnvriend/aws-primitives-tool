@@ -55,6 +55,7 @@ from aws_primitives_tool.kvstore.commands.table_commands import (
     create_table_command,
     drop_table_command,
 )
+from aws_primitives_tool.kvstore.commands.transaction_commands import transaction_command
 
 
 @click.group()
@@ -119,6 +120,9 @@ kvstore.add_command(rpush_command)
 kvstore.add_command(lpop_command)
 kvstore.add_command(rpop_command)
 kvstore.add_command(lrange_command)
+
+# Register transaction commands
+kvstore.add_command(transaction_command)
 
 if __name__ == "__main__":
     main()
