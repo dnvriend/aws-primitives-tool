@@ -256,5 +256,12 @@ def delete_table_command(
     See 'aws-primitives-tool kvstore drop-table --help' for full documentation.
     """
     # Call the drop-table implementation directly
-    ctx.invoke(drop_table_command, table=table, region=region, profile=profile,
-               approve=approve, text=text, verbose=verbose)
+    ctx.invoke(
+        drop_table_command,
+        table=table,
+        region=region,
+        profile=profile,
+        approve=approve,
+        text=text,
+        verbose=verbose,
+    )

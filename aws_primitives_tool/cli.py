@@ -11,6 +11,11 @@ from aws_primitives_tool.kvstore.commands.counter_commands import (
     get_counter_command,
     inc_command,
 )
+from aws_primitives_tool.kvstore.commands.info_commands import (
+    info_command,
+    stats_command,
+    status_command,
+)
 from aws_primitives_tool.kvstore.commands.kv_commands import (
     delete_command,
     exists_command,
@@ -125,6 +130,11 @@ kvstore.add_command(lrange_command)
 
 # Register transaction commands
 kvstore.add_command(transaction_command)
+
+# Register info/stats/status commands
+kvstore.add_command(info_command)
+kvstore.add_command(stats_command)
+kvstore.add_command(status_command)
 
 if __name__ == "__main__":
     main()
