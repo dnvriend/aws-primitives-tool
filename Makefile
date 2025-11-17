@@ -19,6 +19,9 @@ typecheck: ## Run type checking with mypy
 test: ## Run tests
 	uv run pytest tests/
 
+test-integration: ## Run integration tests
+	./tests/integration/run_all_tests.sh
+
 check: lint typecheck test ## Run all checks (lint, typecheck, test)
 
 pipeline: format lint typecheck test build install-global ## Run full pipeline (format, lint, typecheck, test, build, install-global)

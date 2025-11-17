@@ -1,0 +1,5 @@
+555e589 - Dennis Vriend, 2 minutes ago : feat: Implement Phase 4 lock operations for distributed coordination
+c74a640 - Dennis Vriend, 11 minutes ago : feat: Implement Phase 3 counter operations (inc, dec, get-counter)
+3b9d65a - Dennis Vriend, 16 minutes ago : feat: Implement Phase 2 KV operations (delete, exists, list)
+2ba37e0 - Dennis Vriend, 44 minutes ago : feat: Implement kvstore primitive MVP with table management and key-value operations
+1dc6e0e - Dennis Vriend, 2 hours ago : Initial commit from cookiecutter-python-cli-uv
