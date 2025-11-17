@@ -15,9 +15,7 @@ from ..exceptions import KVStoreError, TableNotFoundError
 
 
 def get_table_status(
-    table_name: str,
-    region: str | None = None,
-    profile: str | None = None
+    table_name: str, region: str | None = None, profile: str | None = None
 ) -> dict[str, Any]:
     """Get DynamoDB table status, CloudWatch metrics, and cost estimates.
 
@@ -66,7 +64,7 @@ def get_table_status(
                 StartTime=start_time,
                 EndTime=end_time,
                 Period=3600,
-                Statistics=["Sum", "Average"]
+                Statistics=["Sum", "Average"],
             )
 
             if read_response["Datapoints"]:
@@ -85,7 +83,7 @@ def get_table_status(
                 StartTime=start_time,
                 EndTime=end_time,
                 Period=3600,
-                Statistics=["Sum", "Average"]
+                Statistics=["Sum", "Average"],
             )
 
             if write_response["Datapoints"]:
@@ -104,7 +102,7 @@ def get_table_status(
                     "name": gsi["IndexName"],
                     "status": gsi["IndexStatus"],
                     "size_bytes": gsi.get("IndexSizeBytes", 0),
-                    "item_count": gsi.get("ItemCount", 0)
+                    "item_count": gsi.get("ItemCount", 0),
                 }
                 for gsi in gsi_list
             ]

@@ -333,8 +333,8 @@ def lpop_command(
 
 @click.command("lrange")
 @click.argument("list_name")
-@click.argument("start", type=int, default=0)
-@click.argument("stop", type=int, required=False)
+@click.option("--start", type=int, default=0, help="Start index (inclusive). Supports negative indices.")
+@click.option("--stop", type=int, help="Stop index (exclusive). Supports negative indices.")
 @click.option(
     "--table",
     envvar="KVSTORE_TABLE",
@@ -373,7 +373,7 @@ def lrange_command(
 
     \b
         # Get first 5 items
-        aws-primitives-tool kvstore lrange mylist 0 5
+        aws-primitives-tool kvstore lrange mylist --start 0 --stop 5
 
     \b
         # Get all items
@@ -381,19 +381,19 @@ def lrange_command(
 
     \b
         # Get last 3 items
-        aws-primitives-tool kvstore lrange mylist -3
+        aws-primitives-tool kvstore lrange mylist --start -3
 
     \b
         # Get items 2-4 (indices 2 and 3)
-        aws-primitives-tool kvstore lrange mylist 2 4
+        aws-primitives-tool kvstore lrange mylist --start 2 --stop 4
 
     \b
         # Extract items with jq
-        aws-primitives-tool kvstore lrange mylist 0 5 | jq -r '.items[]'
+        aws-primitives-tool kvstore lrange mylist --start 0 --stop 5 | jq -r '.items[]'
 
     \b
         # Use in shell script
-        ITEMS=$(aws-primitives-tool kvstore lrange tasks 0 10 | jq -r '.items[]')
+        ITEMS=$(aws-primitives-tool kvstore lrange tasks --start 0 --stop 10 | jq -r '.items[]')
         for item in $ITEMS; do
             echo "Processing: $item"
         done

@@ -41,11 +41,18 @@ def prepend_to_list(
     """
     # Construct keys
     # PK: list:{list_name}
-    # SK: negative timestamp with microsecond precision for LIFO ordering
+    # SK: offset - timestamp for head items (lpush)
+    # Uses 2^62 as offset to ensure proper ordering:
+    # - More recent lpush: smaller SK (offset - larger_ts)
+    # - lpush items have SK < offset
+    # - rpush items have SK > offset
+    # With ascending sort: lpush (most recent first), then rpush (oldest first)
     pk = format_key(PREFIX_LIST, list_name)
     timestamp = int(time.time())
     timestamp_ns = time.time_ns()  # Nanosecond precision to prevent collisions
-    sk = str(-timestamp_ns)  # Negative for LIFO - newest items sort first
+    offset = 2**62
+    # Zero-pad to 20 digits for lexicographic sorting
+    sk = f"{offset - timestamp_ns:020d}"
 
     # Build item
     item: dict[str, Any] = {
@@ -92,11 +99,18 @@ def append_to_list(
     """
     # Construct keys
     # PK: list:{list_name}
-    # SK: positive timestamp with microsecond precision for FIFO ordering
+    # SK: offset + timestamp for tail items (rpush)
+    # Uses 2^62 as offset to ensure proper ordering:
+    # - More recent rpush: larger SK (offset + larger_ts)
+    # - rpush items have SK > offset
+    # - lpush items have SK < offset
+    # With ascending sort: lpush (most recent first), then rpush (oldest first)
     pk = format_key(PREFIX_LIST, list_name)
     timestamp = int(time.time())
     timestamp_ns = time.time_ns()  # Nanosecond precision to prevent collisions
-    sk = str(timestamp_ns)  # Positive for FIFO - oldest items sort first
+    offset = 2**62
+    # Zero-pad to 20 digits for lexicographic sorting
+    sk = f"{offset + timestamp_ns:020d}"
 
     # Build item
     item: dict[str, Any] = {
@@ -152,14 +166,15 @@ def get_range(
     pk = format_key(PREFIX_LIST, list_name)
 
     # Get all items (we need to for negative indexing and slicing)
-    # Use descending order (ScanIndexForward=False) to get items in semantic order:
-    # - For lpush (negative timestamps): descending gives smallest-first (most negative)
-    #   = newest-first (LIFO)  # noqa: E501
-    # - For rpush (positive timestamps): descending gives largest-first = last-first
-    # Note: This returns items in the order they would appear in a standard list
+    # Use ascending order (ScanIndexForward=True) to get items in list order:
+    # - lpush items: offset - timestamp (more recent = smaller SK)
+    # - rpush items: offset + timestamp (more recent = larger SK)
+    # - All lpush SKs < offset < all rpush SKs
+    # Ascending sort gives proper list order: [newest_lpush...oldest_lpush, oldest_rpush...newest_rpush]
+    # This matches standard list semantics: [head_items..., tail_items...]
     response = client.table.query(
         KeyConditionExpression=Key(ATTR_PK).eq(pk),
-        ScanIndexForward=False,
+        ScanIndexForward=True,
     )
 
     items = response.get("Items", [])

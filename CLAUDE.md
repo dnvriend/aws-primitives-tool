@@ -80,14 +80,61 @@ make format
 # Type check
 make typecheck
 
-# Run tests
+# Run unit tests
 make test
+
+# Run integration tests (requires AWS credentials)
+make test-integration
 
 # Run all checks
 make check
 
 # Full pipeline
 make pipeline
+```
+
+## Testing
+
+### Unit Tests
+
+Unit tests are located in `tests/` and use pytest:
+
+```bash
+make test
+```
+
+### Integration Tests
+
+Integration tests verify end-to-end functionality against a real DynamoDB table.
+Located in `tests/integration/`:
+
+```bash
+# Run all integration tests
+make test-integration
+
+# Or run directly
+./tests/integration/run_all_tests.sh
+
+# Run specific test suite
+./tests/integration/test_kv_operations.sh
+./tests/integration/test_counter_operations.sh
+./tests/integration/test_list_operations.sh
+```
+
+**Prerequisites:**
+- Valid AWS credentials configured
+- DynamoDB table creation permissions
+- Test table: `aws-primitives-tool-kvstore-test` (auto-created)
+
+**Coverage:**
+- ✅ KV operations (set, get, delete, exists, list)
+- ✅ Counter operations (inc, dec, get-counter)
+- ✅ List operations (lpush, rpush, lpop, rpop, lrange)
+- ✅ Lock operations (acquire, release, extend, check)
+- ✅ Queue, Set, and Leader operations
+- ✅ Edge cases and error handling
+
+See `tests/integration/README.md` for detailed documentation.
 ```
 
 ## Installation Methods

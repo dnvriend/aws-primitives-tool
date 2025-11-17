@@ -29,7 +29,7 @@ logger = get_logger(__name__)
     "--priority",
     type=int,
     default=5,
-    help="Priority level (0-9999999999, default: 5, lower = higher priority)",
+    help="Priority level (0-9999999999, default: 5, higher = higher priority)",
 )
 @click.option("--dedup-id", help="Optional deduplication ID for idempotent pushes")
 @click.option("--ttl", type=int, help="Optional TTL in seconds for automatic expiration")
@@ -64,8 +64,8 @@ def queue_push_command(
 ) -> None:
     """Push a message to a queue with priority and optional deduplication.
 
-    Messages are ordered by priority (lower = higher priority), then by
-    timestamp (FIFO within priority), then by UUID (strict ordering).
+    Messages are ordered by priority (higher number = higher priority), then by
+    timestamp (FIFO within priority).
 
     The receipt handle returned can be used with queue-ack to acknowledge the message.
 
@@ -76,8 +76,8 @@ def queue_push_command(
         aws-primitives-tool kvstore queue-push notifications "Hello, world!"
 
     \b
-        # Push a high-priority message (lower number = higher priority)
-        aws-primitives-tool kvstore queue-push tasks "Critical task" --priority 1
+        # Push a high-priority message (higher number = higher priority)
+        aws-primitives-tool kvstore queue-push tasks "Critical task" --priority 10
 
     \b
         # Push with deduplication to prevent duplicates
@@ -92,7 +92,7 @@ def queue_push_command(
     \b
         # Combine priority, dedup, and TTL
         aws-primitives-tool kvstore queue-push jobs "job-data" \\
-            --priority 3 \\
+            --priority 8 \\
             --dedup-id "job-456" \\
             --ttl 7200
 
@@ -105,7 +105,7 @@ def queue_push_command(
     \b
     Output Format:
         Returns JSON:
-        {"queue": "notifications", "receipt": "queue:notifications#0000000005#...",
+        {"queue": "notifications", "receipt": "0000000005#...",
          "priority": 5, "timestamp": 1234567890, "message_uuid": "abc-123",
          "dedup_id": "order-123-payment"}
     """
@@ -201,14 +201,14 @@ def queue_ack_command(
     or expired), it still returns success.
 
     The receipt handle is the full SK value returned from the queue-pop operation,
-    formatted as: queue:{queue_name}#{priority:010d}#{timestamp}#{uuid}
+    formatted as: {priority:010d}#{timestamp}#{uuid}
 
     Examples:
 
     \b
         # Acknowledge a message using receipt handle
         aws-primitives-tool kvstore queue-ack notifications \\
-            "queue:notifications#0000000005#1234567890#abc-123"
+            "0000000005#1234567890#abc-123"
 
     \b
         # Extract receipt from pop and acknowledge
@@ -218,7 +218,7 @@ def queue_ack_command(
     \b
     Output Format:
         Returns JSON:
-        {"queue": "notifications", "receipt": "queue:notifications#...", "acknowledged": true}
+        {"queue": "notifications", "receipt": "...", "acknowledged": true}
     """
     setup_logging(verbose)
 
@@ -297,14 +297,14 @@ def queue_peek_command(
 
     \b
         # Extract first message data with jq
-        aws-primitives-tool kvstore queue-peek tasks | jq -r '.items[0].data'
+        aws-primitives-tool kvstore queue-peek tasks | jq -r '.items[0].message'
 
     \b
     Output Format:
         Returns JSON:
         {"queue": "notifications", "items": [
-            {"data": {...}, "priority": 5, "timestamp": 1234567890},
-            {"data": {...}, "priority": 10, "timestamp": 1234567891}
+            {"message": {...}, "priority": 5, "timestamp": 1234567890},
+            {"message": {...}, "priority": 10, "timestamp": 1234567891}
         ], "count": 2}
     """
     setup_logging(verbose)
@@ -322,7 +322,7 @@ def queue_peek_command(
                 output_text(f"\nMessage {i}:")
                 output_text(f"  Priority: {item['priority']}")
                 output_text(f"  Timestamp: {item['timestamp']}")
-                output_text(f"  Data: {item['data']}")
+                output_text(f"  Message: {item['message']}")
         else:
             output_json(result)
 
@@ -443,10 +443,10 @@ def queue_pop_command(
     text: bool,
     verbose: int,
 ) -> None:
-    """Pop the oldest message from a queue (FIFO).
+    """Pop the highest-priority message from the queue.
 
     This is a two-step atomic operation:
-    1. Query for the oldest message (lowest SK value)
+    1. Query for the highest-priority message (lowest SK value)
     2. Either delete it (permanent pop) or set TTL (temporary hide)
 
     With visibility_timeout=0 (default), the message is permanently deleted.
@@ -465,7 +465,7 @@ def queue_pop_command(
 
     \b
         # Extract message data with jq
-        aws-primitives-tool kvstore queue-pop tasks | jq -r '.data'
+        aws-primitives-tool kvstore queue-pop tasks | jq -r '.message'
 
     \b
         # Pop and acknowledge workflow
@@ -477,8 +477,8 @@ def queue_pop_command(
     \b
     Output Format:
         Returns JSON when message found:
-        {"queue": "tasks", "data": {...}, "receipt": "queue:tasks#...",
-         "priority": 5, "timestamp": 1234567890}
+        {"queue": "tasks", "message": {...}, "receipt": "...",
+         "priority": 10, "timestamp": 1234567890}
 
         Returns JSON when queue empty:
         {"queue": "tasks", "status": "empty"}
@@ -505,7 +505,7 @@ def queue_pop_command(
                 output_text(f"  Receipt: {result['receipt']}")
                 output_text(f"  Priority: {result['priority']}")
                 output_text(f"  Timestamp: {result['timestamp']}")
-                output_text(f"  Data: {result['data']}")
+                output_text(f"  Message: {result['message']}")
             else:
                 output_json(result)
 

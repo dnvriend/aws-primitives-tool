@@ -43,7 +43,11 @@ class DynamoDBClient:
         self.table_name = table_name
 
     def put_item(
-        self, item: dict[str, Any], condition_expression: str | None = None
+        self,
+        item: dict[str, Any],
+        condition_expression: str | None = None,
+        expression_attribute_names: dict[str, str] | None = None,
+        expression_attribute_values: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Put item with optional condition.
@@ -51,6 +55,8 @@ class DynamoDBClient:
         Args:
             item: Item to put
             condition_expression: Optional condition expression
+            expression_attribute_names: Optional attribute name mappings
+            expression_attribute_values: Optional attribute value bindings
 
         Returns:
             Response from DynamoDB
@@ -63,6 +69,10 @@ class DynamoDBClient:
             kwargs: dict[str, Any] = {"Item": item}
             if condition_expression:
                 kwargs["ConditionExpression"] = condition_expression
+            if expression_attribute_names:
+                kwargs["ExpressionAttributeNames"] = expression_attribute_names
+            if expression_attribute_values:
+                kwargs["ExpressionAttributeValues"] = expression_attribute_values
             return self.table.put_item(**kwargs)  # type: ignore[return-value]
         except ClientError as e:
             self._handle_error(e)

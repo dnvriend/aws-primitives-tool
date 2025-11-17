@@ -18,8 +18,7 @@ def get_key_info(client: DynamoDBClient, key: str) -> dict[str, Any]:
     """
     # Query all items for this key (PK)
     response = client.table.query(
-        KeyConditionExpression="PK = :pk",
-        ExpressionAttributeValues={":pk": key}
+        KeyConditionExpression="PK = :pk", ExpressionAttributeValues={":pk": key}
     )
 
     items = response.get("Items", [])
@@ -93,10 +92,7 @@ def get_table_stats(client: DynamoDBClient) -> dict[str, Any]:
         pk = str(item.get("PK", ""))
 
         if item_type == "counter":
-            counters.append({
-                "key": pk,
-                "value": item.get("value", 0)
-            })
+            counters.append({"key": pk, "value": item.get("value", 0)})
         elif item_type == "kv":
             kv_count += 1
         elif item_type == "list":
@@ -106,17 +102,9 @@ def get_table_stats(client: DynamoDBClient) -> dict[str, Any]:
         elif item_type == "queue":
             seen_queues[pk] = seen_queues.get(pk, 0) + 1
         elif item_type == "lock":
-            locks.append({
-                "key": pk,
-                "owner": item.get("owner", ""),
-                "ttl": item.get("ttl")
-            })
+            locks.append({"key": pk, "owner": item.get("owner", ""), "ttl": item.get("ttl")})
         elif item_type == "leader":
-            leaders.append({
-                "key": pk,
-                "leader": item.get("node_id", ""),
-                "ttl": item.get("ttl")
-            })
+            leaders.append({"key": pk, "leader": item.get("node_id", ""), "ttl": item.get("ttl")})
 
     # Convert collection counts to list format
     for key, size in seen_lists.items():
@@ -136,5 +124,5 @@ def get_table_stats(client: DynamoDBClient) -> dict[str, Any]:
         "locks": locks,
         "leaders": leaders,
         "kv_pairs": kv_count,
-        "total_items": len(items)
+        "total_items": len(items),
     }

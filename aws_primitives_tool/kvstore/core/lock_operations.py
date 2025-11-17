@@ -55,12 +55,22 @@ def acquire_lock(
         "updated_at": timestamp,
     }
 
-    condition = "attribute_not_exists(PK)"
+    # Allow lock acquisition if:
+    # 1. Lock doesn't exist (attribute_not_exists)
+    # 2. Lock is owned by the same owner (value = :owner) - idempotent
+    condition = "attribute_not_exists(PK) OR #v = :owner"
+    expression_attribute_names = {"#v": "value"}
+    expression_attribute_values = {":owner": owner}
 
     if wait == 0:
         # Try once, no retries
         try:
-            client.put_item(item, condition_expression=condition)
+            client.put_item(
+                item,
+                condition_expression=condition,
+                expression_attribute_names=expression_attribute_names,
+                expression_attribute_values=expression_attribute_values,
+            )
             return {
                 "lock": lock_name,
                 "owner": owner,
@@ -81,7 +91,12 @@ def acquire_lock(
 
         while True:
             try:
-                client.put_item(item, condition_expression=condition)
+                client.put_item(
+                    item,
+                    condition_expression=condition,
+                    expression_attribute_names=expression_attribute_names,
+                    expression_attribute_values=expression_attribute_values,
+                )
                 return {
                     "lock": lock_name,
                     "owner": owner,
@@ -117,7 +132,7 @@ def acquire_lock(
 
 def release_lock(client: DynamoDBClient, lock_name: str, owner: str) -> dict[str, Any]:
     """
-    Release a distributed lock.
+    Release a distributed lock. This operation is idempotent.
 
     Args:
         client: DynamoDB client
@@ -128,7 +143,7 @@ def release_lock(client: DynamoDBClient, lock_name: str, owner: str) -> dict[str
         Lock release confirmation
 
     Raises:
-        ConditionFailedError: If owner doesn't match lock holder
+        KVStoreError: For any unexpected DynamoDB errors.
     """
     pk = format_key(PREFIX_LOCK, lock_name)
     sk = pk
@@ -140,10 +155,13 @@ def release_lock(client: DynamoDBClient, lock_name: str, owner: str) -> dict[str
             expression_attribute_names={"#value": "value"},
             expression_attribute_values={":owner": owner},
         )
+        # If delete is successful, the lock was held and is now released.
+        return {"lock": lock_name, "released": True, "status": "released"}
     except ConditionFailedError:
-        raise ConditionFailedError(f"Cannot release lock '{lock_name}': not owned by '{owner}'")
-
-    return {"lock": lock_name, "released": True}
+        # This error means the lock either doesn't exist or is owned by someone else.
+        # In either case, the lock is not held by the specified owner, so the
+        # operation can be considered a success from an idempotency standpoint.
+        return {"lock": lock_name, "released": True, "status": "not_owned_or_already_released"}
 
 
 def extend_lock(

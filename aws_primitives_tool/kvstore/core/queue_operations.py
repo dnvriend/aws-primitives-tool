@@ -36,14 +36,14 @@ def push_to_queue(
     """
     Push a message to a queue with priority and optional deduplication.
 
-    Messages are ordered by priority (lower = higher priority), then by
-    timestamp (FIFO within priority), then by UUID (strict ordering).
+    Messages are ordered by priority (higher number = higher priority), then by
+    timestamp (FIFO within priority).
 
     Args:
         client: DynamoDB client
         queue_name: Name of the queue
         data: Message data to store
-        priority: Priority level (0-9999999999, default: 5, lower = higher priority)
+        priority: Priority level (0-9999999999, default: 5, higher = higher priority)
         dedup_id: Optional deduplication ID for idempotent pushes
         ttl: Optional TTL in seconds from now for automatic expiration
 
@@ -79,8 +79,10 @@ def push_to_queue(
     # Generate UUID for tie-breaking
     message_uuid = str(uuid.uuid4())
 
-    # Construct composite sort key: queue:{queue_name}#{priority:010d}#{timestamp}#{uuid}
-    sk = f"{PREFIX_QUEUE}:{queue_name}#{priority:010d}#{timestamp_micros}#{message_uuid}"
+    # Invert priority for sorting: higher number = higher priority = smaller SK
+    inverted_priority = 9999999999 - priority
+    # Construct composite sort key: {inverted_priority:010d}#{timestamp}#{uuid}
+    sk = f"{inverted_priority:010d}#{timestamp_micros}#{message_uuid}"
     pk = format_key(PREFIX_QUEUE, queue_name)
 
     # Build item
@@ -130,7 +132,7 @@ def acknowledge_message(
     This operation is idempotent: if the message doesn't exist (already acknowledged
     or expired), it returns success anyway.
 
-    The receipt format is: queue:{queue_name}#{priority:010d}#{timestamp}#{uuid}
+    The receipt format is: {priority:010d}#{timestamp}#{uuid}
 
     Args:
         client: DynamoDB client
@@ -204,32 +206,15 @@ def peek_queue(
     # Parse items into readable format
     parsed_items = []
     for item in items:
-        # Extract timestamp and priority from SK
-        # SK format: queue:{queue_name}#{priority:010d}#{timestamp}#{uuid}
-        sk = item.get(ATTR_SK, "")
-        sk_parts = sk.split("#")
-
-        # Parse priority (second part after prefix)
-        priority = 0
-        if len(sk_parts) > 1:
-            try:
-                priority = int(sk_parts[1])
-            except (ValueError, IndexError):
-                priority = 0
-
-        # Parse timestamp (third part)
-        timestamp = 0
-        if len(sk_parts) > 2:
-            try:
-                timestamp = int(sk_parts[2])
-            except (ValueError, IndexError):
-                timestamp = 0
+        metadata = item.get(ATTR_METADATA, {})
+        priority = metadata.get("priority", 0)
+        timestamp_micros = metadata.get("timestamp_micros", 0)
 
         parsed_items.append(
             {
-                "data": item.get("value", {}),
+                "message": item.get(ATTR_VALUE, {}),
                 "priority": priority,
-                "timestamp": timestamp,
+                "timestamp": timestamp_micros,
             }
         )
 
@@ -278,10 +263,10 @@ def pop_from_queue(
     visibility_timeout: int = 0,
 ) -> dict[str, Any] | None:
     """
-    Pop the oldest message from a queue (FIFO).
+    Pop the highest-priority message from a queue.
 
     This is a two-step operation:
-    1. Query for the oldest item (lowest SK value)
+    1. Query for the highest-priority item (lowest SK value)
     2. Either delete it (permanent pop) or update TTL (visibility timeout)
 
     Args:
@@ -293,10 +278,10 @@ def pop_from_queue(
         Dictionary with queue message data, or None if queue is empty:
         {
             "queue": "task-queue",
-            "data": {"task": "process"},
-            "receipt": "queue:task-queue#1234567890000",
-            "priority": 5,
-            "timestamp": 1234567890
+            "message": {"task": "process"},
+            "receipt": "{priority:010d}#{timestamp}#{uuid}",
+            "priority": 10,
+            "timestamp": 1234567890000
         }
 
     Raises:
@@ -304,12 +289,13 @@ def pop_from_queue(
     """
     pk = format_key(PREFIX_QUEUE, queue_name)
 
-    # Step 1: Query for oldest item (sorted by SK ascending, limit 1)
+    # Step 1: Query for highest-priority item (sorted by SK ascending, limit 1)
     try:
         key_condition = Key(ATTR_PK).eq(pk)
         items = client.query(
             key_condition_expression=key_condition,
             limit=1,
+            scan_index_forward=True,  # Ascending order retrieves smallest SK first
         )
 
         if not items:
@@ -334,32 +320,17 @@ def pop_from_queue(
                 expression_attribute_values={":ttl": ttl},
             )
 
-        # Extract and return message data
-        # SK format: queue:{queue_name}#{priority:010d}#{timestamp}#{uuid}
-        sk_parts = sk.split("#")
-
-        # Parse priority (second part after prefix)
-        priority = 0
-        if len(sk_parts) > 1:
-            try:
-                priority = int(sk_parts[1])
-            except (ValueError, IndexError):
-                priority = 0
-
-        # Parse timestamp (third part)
-        timestamp = 0
-        if len(sk_parts) > 2:
-            try:
-                timestamp = int(sk_parts[2])
-            except (ValueError, IndexError):
-                timestamp = 0
+        # Extract and return message data from metadata
+        metadata = item.get(ATTR_METADATA, {})
+        priority = metadata.get("priority", 0)
+        timestamp_micros = metadata.get("timestamp_micros", 0)
 
         return {
             "queue": queue_name,
-            "data": item.get("value", {}),
+            "message": item.get(ATTR_VALUE, {}),
             "receipt": sk,
             "priority": priority,
-            "timestamp": timestamp,
+            "timestamp": timestamp_micros,
         }
 
     except Exception as e:
