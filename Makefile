@@ -35,10 +35,10 @@ run: ## Run aws-primitives-tool (usage: make run ARGS="...")
 	uv run aws-primitives-tool $(ARGS)
 
 build: ## Build package
-	uv build
+	uv build --force-pep517
 
-install-global: ## Install globally with uv tool
-	uv tool install . --reinstall
+install-global: build uninstall-global ## Install globally with uv tool (rebuilds first)
+	uv tool install .
 
 uninstall-global: ## Uninstall global installation
 	uv tool uninstall aws-primitives-tool

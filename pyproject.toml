@@ -12,6 +12,43 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
+keywords = [
+    "aws",
+    "cli",
+    "serverless",
+    "lambda",
+    "dynamodb",
+    "s3",
+    "sqs",
+    "sns",
+    "cloudformation",
+    "primitives",
+    "devops",
+    "infrastructure",
+    "automation",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
+    "Environment :: Console",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/dnvriend/aws-primitives-tool"
+Documentation = "https://github.com/dnvriend/aws-primitives-tool#readme"
+Repository = "https://github.com/dnvriend/aws-primitives-tool"
+Issues = "https://github.com/dnvriend/aws-primitives-tool/issues"
+Changelog = "https://github.com/dnvriend/aws-primitives-tool/releases"
 
 [project.scripts]
 aws-primitives-tool = "aws_primitives_tool.cli:main"
